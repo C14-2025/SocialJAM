@@ -11,6 +11,7 @@ class User(base):
     email = Column(String)
     senha = Column(String)
     favorite_artist = Column(String, nullable=True)
+    user_photo_url = Column(String, nullable=True)
     
 class Artist(base):
     __tablename__ = 'artist'
