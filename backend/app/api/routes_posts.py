@@ -15,15 +15,15 @@ async def get_last_posts(pagination: int = 20, db = Depends(get_mongo_db)):
 
 
 @router.post('/create')
-async def create_post(post: PostCreate, current_user: dict, db = Depends(get_mongo_db)):
+async def create_post(post: PostCreate, db = Depends(get_mongo_db)):
     repo = PostsRepo(db)
-    post_data = {
-        'author_id': current_user['id'],
-        'content': post.content,
-        'images': post.images,
-        'created_at': datetime.now(timezone.utc)
-    }
-    created = await repo.create_post(post_data)
+    try:
+        created = await repo.create_post(post)
+    except InvalidId:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Invalid ID format'
+        )
     return created
 
 @router.get('/{post_id}', response_model=PostDB)

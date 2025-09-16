@@ -3,7 +3,7 @@ from typing import List, Optional
 from datetime import datetime
 
 class PostCreate(BaseModel):
-    author_id: int # ID from SQL
+    author_id: str 
     content: str
     images: Optional[List[str]] = []
 

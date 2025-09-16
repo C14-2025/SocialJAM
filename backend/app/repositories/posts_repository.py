@@ -1,19 +1,22 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
 from datetime import datetime, timezone
-
-client = AsyncIOMotorClient("mongodb://localhost:27017")
-db = client['SocialJAM']
+from app.models.mongo_posts import PostCreate
 
 class PostsRepo:
 
     def __init__(self, db: AsyncIOMotorClient):
         self.db = db
 
-    async def create_post(self, post_data: dict):
-        post_data['likes'] = 0
-        post_data['liked_by'] = []
-        post_data['created_at'] = datetime.now(timezone.utc)
+    async def create_post(self, post: PostCreate):
+        post_data = {
+            'author_id': ObjectId(post.author_id),
+            'content': post.content,
+            'images': post.images,
+            'likes': 0,
+            'liked_by': [],
+            'created_at': datetime.now(timezone.utc),
+        }
         result = await self.db['Posts'].insert_one(post_data)
         return str(result.inserted_id)
 
@@ -35,5 +38,5 @@ class PostsRepo:
         return [{**p, '_id': str(p['_id'])} for p in posts]
     
     async def delete_post(self, post_id: str):
-        result = await db['Posts'].delete_one({'_id': ObjectId(post_id)})
+        result = await self.db['Posts'].delete_one({'_id': ObjectId(post_id)})
         return result.deleted_count

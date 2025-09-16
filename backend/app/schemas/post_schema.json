@@ -1,0 +1,44 @@
+{
+    "$jsonSchema": {
+        "bsonType": "object",
+        "required": [
+            "author_id",
+            "content",
+            "created_at"
+        ],
+        "properties": {
+            "author_id": {
+                "bsonType": "objectId",
+                "description": "ObjectID from users cache"
+            },
+            "content": {
+                "bsonType": "string",
+                "description": "Text content from the post"
+            },
+            "images": {
+                "bsonType": "array",
+                "items": {
+                    "bsonType": "string"
+                },
+                "description": "Array of paths/links to the images of the post"
+            },
+            "likes": {
+                "bsonType": "int",
+                "minimum": 0,
+                "description": "Number of likes in this post"
+            },
+            "liked_by": {
+                "bsonType": "array",
+                "uniqueItems": true,
+                "items": {
+                    "bsonType": "objectId"
+                },
+                "description": "array of objectIds to the users that liked this post"
+            },
+            "created_at": {
+                "bsonType": "date",
+                "description": "Date of creation"
+            }
+        }
+    }
+}

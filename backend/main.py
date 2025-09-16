@@ -7,7 +7,7 @@ from app.api.routes_artist import router as artist_router
 from app.api.routes_posts import router as post_router
 from app import models_sql as models
 from app.database import engine
-from app.core.mongo import connect_mongo, disconnect_mongo, get_mongo_db
+from app.core.mongo import connect_mongo, disconnect_mongo, get_mongo_db, apply_schemas
 from contextlib import asynccontextmanager
 
 
@@ -19,11 +19,13 @@ async def lifespan(app: FastAPI):
         db = get_mongo_db()
         if db is None:
             raise RuntimeError('Falha ao inciar o mongo')
-
         await db.command('ping')
+        print('Conectado ao MongoDB')
+        await apply_schemas()
         yield
     finally:
         await disconnect_mongo()
+        print('Ecerrando conexão com mongoDB')
     
 app = FastAPI(
     title="SocialJAM",
