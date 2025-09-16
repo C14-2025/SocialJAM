@@ -27,7 +27,7 @@ def update_user(username, request:schemas.User, db:Session=Depends(get_db)):
 
 @router.get('/', response_model=List[schemas.ShowUser])
 def get_all_users(db:Session = Depends(get_db)):
-    return user.get_all_users(db)
+    return user.get_all(db)
 
 @router.get('/{username}', status_code=200, response_model=schemas.ShowUser)
 def show_user(username,response:Response, db:Session=Depends(get_db)):

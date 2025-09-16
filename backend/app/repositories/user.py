@@ -3,6 +3,7 @@ from .. import models_sql
 from ..database import get_db
 from fastapi import APIRouter, Depends, status, Response, HTTPException
 from typing import List, Optional
+from ..core.security import HashPWD
 
 def get_all(db:Session=Depends(get_db)):
     users = db.query(models_sql.User).all()
@@ -17,7 +18,7 @@ def create_user(request_user: models_sql.User, db: Session = Depends(get_db)):
         nome=request_user.nome,
         username=request_user.username,
         email=request_user.email,
-        senha=request_user.senha
+        senha=HashPWD(request_user.senha)
     )
     db.add(new_user)
     db.commit()
