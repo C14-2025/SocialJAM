@@ -11,6 +11,8 @@ class ShowUser(BaseModel):
     username: str
     nome: str
     email: str
+    photo: Optional[str] = None
+    favorite_artist: Optional[str] = None
     class Config:
         orm_mode = True
     

@@ -1,17 +1,12 @@
 from fastapi import APIRouter, Depends, status, Response, HTTPException
 from typing import Optional
-from .. import models_sql, schemas
+from .. import models_sql
+from .. import schemas
 from sqlalchemy.orm import Session
 from ..database import get_db
 from typing import List
 
-router = APIRouter(
-    tags=['Artist'],
-    prefix="/artist"
-)
-
-@router.post('/create', status_code=status.HTTP_201_CREATED)
-def createArtist(request:schemas.Artist, db:Session=Depends(get_db)):
+def create_artist(request:schemas.Artist, db:Session=Depends(get_db)):
     new_artist=models_sql.Artist(
         nome = request.nome,
         music_genre=request.music_genre
@@ -20,14 +15,11 @@ def createArtist(request:schemas.Artist, db:Session=Depends(get_db)):
     db.commit()
     db.refresh(new_artist)
     return new_artist
-
-@router.get("/all",response_model=List[schemas.Artist])
-def showAllArtists(db:Session=Depends(get_db)):
+def show_all_artists(db:Session=Depends(get_db)):
     artists = db.query(models_sql.Artist).all()
     return artists
 
-@router.get("/{nome}", status_code=status.HTTP_200_OK, response_model=List[schemas.ShowArtist])
-def showArtist(nome, response:Response, limit: Optional[int] = None, db:Session=Depends(get_db)):
+def show_artist(nome: str, db:Session=Depends(get_db), limit:Optional[int] = None):
     query = db.query(models_sql.Artist).filter(models_sql.Artist.nome==nome)
     if limit:
         query = query.limit(limit)
