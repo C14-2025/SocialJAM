@@ -14,9 +14,12 @@ def get_user(username: str, db: Session = Depends(get_db)):
     return user
 
 def create_user(request_user: models_sql.User, db: Session = Depends(get_db)):
+    usernameaux = request_user.username
+    if "@" in usernameaux:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Username não pode conter '@'")
     new_user = models_sql.User(
         nome=request_user.nome,
-        username=request_user.username,
+        username=usernameaux,
         email=request_user.email,
         senha=HashPWD(request_user.senha)
     )

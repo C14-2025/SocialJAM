@@ -1,11 +1,11 @@
 from typing import Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
 class User(BaseModel):
     username: str
     nome: Optional[str] = None
     senha: str
-    email: str
+    email: EmailStr
     
 class ShowUser(BaseModel):
     username: str
@@ -30,3 +30,8 @@ class ShowArtist(Artist):
     albums: List[Album]
     class Config:
         orm_mode=True
+
+
+class Login(BaseModel):
+    username_email: str
+    senha: str
