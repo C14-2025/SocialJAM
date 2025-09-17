@@ -12,6 +12,10 @@ from app.core.mongo import connect_mongo, disconnect_mongo, get_mongo_db, apply_
 from contextlib import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 # connect to mongo db right after starting the server and disconnect before closing the server
 @asynccontextmanager

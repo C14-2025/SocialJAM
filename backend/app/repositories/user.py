@@ -1,11 +1,10 @@
 from sqlalchemy.orm import Session
-from .. import models_sql
+from .. import models_sql, schemas
 from ..database import get_db
-from fastapi import APIRouter, Depends, status, Response, HTTPException
-from typing import List, Optional
-from ..core.security import HashPWD
+from fastapi import Depends, status, HTTPException
+from ..core.security import Hash
 
-def get_all(db:Session=Depends(get_db)):
+def get_all_users(db:Session=Depends(get_db)):
     users = db.query(models_sql.User).all()
     return users
 
@@ -13,7 +12,7 @@ def get_user(username: str, db: Session = Depends(get_db)):
     user = db.query(models_sql.User).filter(models_sql.User.username == username).first()
     return user
 
-def create_user(request_user: models_sql.User, db: Session = Depends(get_db)):
+def create_user(request_user: schemas.User, db: Session = Depends(get_db)):
     usernameaux = request_user.username
     if "@" in usernameaux:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Username não pode conter '@'")
@@ -21,7 +20,7 @@ def create_user(request_user: models_sql.User, db: Session = Depends(get_db)):
         nome=request_user.nome,
         username=usernameaux,
         email=request_user.email,
-        senha=HashPWD(request_user.senha)
+        senha=Hash.hashPWD(request_user.senha)
     )
     db.add(new_user)
     db.commit()
@@ -36,11 +35,17 @@ def delete_user(username: str, db: Session = Depends(get_db)):
     db.commit()
     return f"{username} deletado"
 
-def update_user(username: str, request: models_sql.User, db: Session = Depends(get_db)):
+def update_user(username: str, request: schemas.User, db: Session = Depends(get_db)):
     user = db.query(models_sql.User).filter(models_sql.User.username == username)
     if not user.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User {username} não foi encontrado")
-    user.update(request.model_dump(exclude_unset=True))
+    
+    # Hash da senha se ela foi fornecida na atualização
+    update_data = request.model_dump(exclude_unset=True)
+    if 'senha' in update_data:
+        update_data['senha'] = Hash.hashPWD(update_data['senha'])
+    
+    user.update(update_data)
     db.commit()
     return "User Updated"
 
