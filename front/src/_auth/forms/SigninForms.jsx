@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 
 import {
   Form,
@@ -19,7 +20,7 @@ import Loader from "@/components/shared/Loader";
 
 
 const SigninForms = () => {
-  const isUserLoading = false;
+  const [isUserLoading, setIsUserLoading] = useState(false);
   const navigate = useNavigate();
 
   // 1. Define your form.
@@ -36,10 +37,14 @@ const SigninForms = () => {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
     console.log(values);
+    setIsUserLoading(true);
 
     // Simula o login e redireciona para a página inicial
-    alert("Login realizado com sucesso!");
-    navigate("/");
+    setTimeout(() =>{
+      setIsUserLoading(false);
+      alert("Login realizado com sucesso!");
+      navigate("/");
+    }, 1500);
   }
   return (  
     <Form {...form}>
