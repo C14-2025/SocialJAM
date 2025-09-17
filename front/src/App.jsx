@@ -6,6 +6,7 @@ import {Home} from "./_root/pages";
 import SignupForms from "./_auth/forms/SignupForms";
 import AuthLayout from "./_auth/AuthLayout";
 import RootLayout from "./_root/RootLayout";
+import ProtectedRoute from "./components/shared/ProtectedRoute";
 
 
 
@@ -16,11 +17,15 @@ const App = () => {
         {/* Rotas públicas */}
         <Route element={<AuthLayout />}>
           <Route path="/signup" element={<SignupForms />} />
-          <Route path="/signin" element={<SigninForms />} />
+          <Route path="/sign-in" element={<SigninForms />} />
         </Route>
 
         {/* Rotas privadas */}
-        <Route element={<RootLayout />}>
+        <Route element={
+          <ProtectedRoute>
+            <RootLayout />
+          </ProtectedRoute>
+        }>
           <Route index element={<Home />} />
         </Route>
 
