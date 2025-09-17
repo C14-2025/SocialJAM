@@ -6,9 +6,19 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "bcrypt>=4.3.0",
+    "email-validator>=2.3.0",
     "fastapi[all]>=0.116.1",
+    "motor>=3.7.1",
     "passlib>=1.7.4",
+    "pymongo>=4.15.1",
     "pytest>=8.4.2",
+    "python-dotenv>=1.1.1",
+    "python-jose>=3.5.0",
     "sqlalchemy>=2.0.43",
     "uvicorn>=0.35.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest-asyncio>=1.2.0",
 ]

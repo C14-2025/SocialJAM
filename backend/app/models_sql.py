@@ -8,7 +8,7 @@ class User(base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     nome = Column(String, nullable=True)
     username = Column(String, index=True, unique=True)
-    email = Column(String)
+    email = Column(String, unique=True, index=True)
     senha = Column(String)
     favorite_artist = Column(String, nullable=True)
     user_photo_url = Column(String, nullable=True)

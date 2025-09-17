@@ -1,16 +1,25 @@
 from fastapi import APIRouter, Depends, status, Response, HTTPException
 from typing import Optional
-from .. import models, schemas
+from .. import models_sql, schemas
 from sqlalchemy.orm import Session
 from ..database import get_db
 from typing import List
+from ..core.permissions import require_system_script_for_artist_creation
 
-router = APIRouter()
+router = APIRouter(
+    tags=['Artist'],
+    prefix="/artist"
+)
 
-@router.post('/artistCreate', status_code=status.HTTP_201_CREATED, tags=['Artist'])
-def createArtist(request:schemas.Artist, db:Session=Depends(get_db)):
-    new_artist=models.Artist(
-        nome = request.nome,
+@router.post('/create', status_code=status.HTTP_201_CREATED)
+def createArtist(
+    request: schemas.Artist, 
+    db: Session = Depends(get_db),
+    _: None = Depends(require_system_script_for_artist_creation)
+):
+    # Esta rota só será executada se a verificação de permissão passar
+    new_artist = models_sql.Artist(
+        nome=request.nome,
         music_genre=request.music_genre
     )
     db.add(new_artist)
@@ -18,14 +27,14 @@ def createArtist(request:schemas.Artist, db:Session=Depends(get_db)):
     db.refresh(new_artist)
     return new_artist
 
-@router.get("/artistAll",response_model=List[schemas.Artist], tags=['Artist'])
+@router.get("/all",response_model=List[schemas.Artist])
 def showAllArtists(db:Session=Depends(get_db)):
-    artists = db.query(models.Artist).all()
+    artists = db.query(models_sql.Artist).all()
     return artists
 
-@router.get("/artist/{nome}", status_code=status.HTTP_200_OK, response_model=List[schemas.ShowArtist], tags=['Artist'])
+@router.get("/{nome}", status_code=status.HTTP_200_OK, response_model=List[schemas.ShowArtist])
 def showArtist(nome, response:Response, limit: Optional[int] = None, db:Session=Depends(get_db)):
-    query = db.query(models.Artist).filter(models.Artist.nome==nome)
+    query = db.query(models_sql.Artist).filter(models_sql.Artist.nome==nome)
     if limit:
         query = query.limit(limit)
     artists = query.all()
