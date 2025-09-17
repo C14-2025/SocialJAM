@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from typing import List
 from ..repositories import album
+from ..core.permissions import require_system_script_for_album_creation
 
 router = APIRouter(
     tags=['Album'],
@@ -13,7 +14,12 @@ router = APIRouter(
 )
 
 @router.post('/create',status_code=status.HTTP_201_CREATED)
-def createAlbum(request:schemas.Album, db:Session=Depends(get_db)):
+def createAlbum(
+    request: schemas.Album, 
+    db: Session = Depends(get_db),
+    _: None = Depends(require_system_script_for_album_creation)
+):
+    # Esta rota só será executada se a verificação de permissão passar
     return album.create_album(request, db)
 
 @router.get("/{nome}", status_code=status.HTTP_200_OK, response_model=List[schemas.Album])

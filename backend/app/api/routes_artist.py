@@ -4,6 +4,7 @@ from .. import models_sql, schemas
 from sqlalchemy.orm import Session
 from ..database import get_db
 from typing import List
+from ..core.permissions import require_system_script_for_artist_creation
 
 router = APIRouter(
     tags=['Artist'],
@@ -11,9 +12,14 @@ router = APIRouter(
 )
 
 @router.post('/create', status_code=status.HTTP_201_CREATED)
-def createArtist(request:schemas.Artist, db:Session=Depends(get_db)):
-    new_artist=models_sql.Artist(
-        nome = request.nome,
+def createArtist(
+    request: schemas.Artist, 
+    db: Session = Depends(get_db),
+    _: None = Depends(require_system_script_for_artist_creation)
+):
+    # Esta rota só será executada se a verificação de permissão passar
+    new_artist = models_sql.Artist(
+        nome=request.nome,
         music_genre=request.music_genre
     )
     db.add(new_artist)
