@@ -4,6 +4,7 @@ Configurações e fixtures para testes do backend SocialJAM
 import pytest
 import pytest_asyncio
 import asyncio
+import os
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -12,6 +13,9 @@ from sqlalchemy.pool import StaticPool
 
 from app.database import base, get_db
 from main import app
+
+# Configurar variável de ambiente para testes
+os.environ["SECRET_KEY"] = "test_secret_key_for_jwt_tokens_in_tests_should_be_very_secure"
 
 
 # Configuração do banco de dados de teste em memória

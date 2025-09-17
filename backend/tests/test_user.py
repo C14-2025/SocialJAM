@@ -2,7 +2,7 @@
 import pytest
 from fastapi import status
 from app import models_sql as models
-from app.core.security import HashPWD
+from app.core.security import Hash
 
 
 class TestUserModel:
@@ -16,7 +16,7 @@ class TestUserModel:
             nome=user_data["nome"],
             username=user_data["username"],
             email=user_data["email"],
-            senha=HashPWD(user_data["senha"])
+            senha=Hash.hashPWD(user_data["senha"])
         )
         db_session.add(new_user)
         db_session.commit()
@@ -83,7 +83,14 @@ class TestUserAPI:
         assert user_data1["username"] in usernames
         assert user_data2["username"] in usernames
     
-    def test_update_user(self, client, sample_user_data):
+    def test_get_all_users_requires_auth(self, client, sample_user_data):
+        # Act - Tentar acessar sem autenticação
+        response = client.get("/user/")
+        
+        # Assert
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    
+    def test_update_user_requires_auth(self, client, sample_user_data):
         # Arrange - Criar usuário
         user_data = sample_user_data
         client.post("/user/", json=user_data)
@@ -95,19 +102,64 @@ class TestUserAPI:
             "senha": "novasenha123"
         }
         
-        # Act
+        # Act - Tentar atualizar sem autenticação
         response = client.put(f"/user/{user_data['username']}/update", json=update_data)
         
         # Assert
-        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
     
-    def test_delete_user(self, client, sample_user_data):
+    def test_delete_user_requires_auth(self, client, sample_user_data):
         # Arrange - Criar usuário
         user_data = sample_user_data
         client.post("/user/", json=user_data)
         
-        # Act
+        # Act - Tentar deletar sem autenticação
         response = client.delete(f"/user/{user_data['username']}/delete")
+        
+        # Assert
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    
+    def test_update_own_user_with_auth(self, client, sample_user_data):
+        # Arrange - Criar usuário e fazer login
+        user_data = sample_user_data
+        client.post("/user/", json=user_data)
+        
+        login_data = {
+            "username": user_data["username"],
+            "password": user_data["senha"]
+        }
+        response = client.post("/auth/login", data=login_data)
+        token = response.json()["access_token"]
+        
+        update_data = {
+            "username": user_data["username"],
+            "nome": "Nome Atualizado",
+            "email": "novo@example.com",
+            "senha": "novasenha123"
+        }
+        
+        # Act - Atualizar com autenticação
+        headers = {"Authorization": f"Bearer {token}"}
+        response = client.put(f"/user/{user_data['username']}/update", json=update_data, headers=headers)
+        
+        # Assert
+        assert response.status_code == status.HTTP_202_ACCEPTED
+    
+    def test_delete_own_user_with_auth(self, client, sample_user_data):
+        # Arrange - Criar usuário e fazer login
+        user_data = sample_user_data
+        client.post("/user/", json=user_data)
+        
+        login_data = {
+            "username": user_data["username"],
+            "password": user_data["senha"]
+        }
+        response = client.post("/auth/login", data=login_data)
+        token = response.json()["access_token"]
+        
+        # Act - Deletar com autenticação
+        headers = {"Authorization": f"Bearer {token}"}
+        response = client.delete(f"/user/{user_data['username']}/delete", headers=headers)
         
         # Assert
         assert response.status_code == status.HTTP_204_NO_CONTENT

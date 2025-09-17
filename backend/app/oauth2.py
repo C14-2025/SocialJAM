@@ -1,6 +1,6 @@
 from fastapi import Depends, HTTPException, status
 from . import schemas, database
-import os
+from .JWT_token import SECRET_KEY, ALGORITHM
 from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer
 
@@ -26,7 +26,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db = Depends(dat
     
 def verify_token(token: str, credentials_exception):
     try:
-        payload = jwt.decode(token, os.getenv("SECRET_KEY"), algorithms=["HS256"])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception
