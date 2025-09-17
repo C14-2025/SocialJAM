@@ -16,14 +16,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { SigninValidation } from "@/lib/validation";
 import Loader from "@/components/shared/Loader";
+import { loginUser } from "@/api";
+import { useAuth } from "@/context/AuthContext";
 
 
 
 const SigninForms = () => {
   const [isUserLoading, setIsUserLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
+  const { login } = useAuth();
 
-  // 1. Define your form.
+
   const form = useForm({
     resolver: zodResolver(SigninValidation),
     defaultValues: {
@@ -32,19 +36,27 @@ const SigninForms = () => {
     },
   });
 
-  // 2. Define a submit handler.
-  function onSubmit(values) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
+
+  async function onSubmit(values) {
     console.log(values);
     setIsUserLoading(true);
+    setErrorMessage("");
 
-    // Simula o login e redireciona para a página inicial
-    setTimeout(() =>{
+    try {
+      const result = await loginUser(values.email, values.password);
+      
+      if (result.success) {
+        login();
+        navigate("/");
+      } else {
+        setErrorMessage(result.error);
+      }
+    } catch (error) {
+      console.error('Erro no login:', error);
+      setErrorMessage("Erro inesperado. Tente novamente.");
+    } finally {
       setIsUserLoading(false);
-      alert("Login realizado com sucesso!");
-      navigate("/");
-    }, 1500);
+    }
   }
   return (  
     <Form {...form}>
@@ -53,9 +65,13 @@ const SigninForms = () => {
 
         <h2 className="h3-bold md:h2-bold pt-5 sm:pt-12">Entre com sua conta</h2>
 
-        <p className="text-light-3 small-medium md:base-regular mt-12">Entre com a sua conta para usar o SocialJAM.</p>
-
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-5 w-full mt-4">
+          
+          {errorMessage && (
+            <div className="bg-red-500/20 text-red-500 p-3 rounded-xl text-center">
+              {errorMessage}
+            </div>
+          )}
 
           <FormField
             control={form.control}
