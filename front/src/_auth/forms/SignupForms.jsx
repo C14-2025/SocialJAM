@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 
 import {
   Form,
@@ -17,7 +18,7 @@ import { SignupValidation } from "@/lib/validation";
 import Loader from "@/components/shared/Loader";
 
 const SignupForms = () => {
-  const isLoading = false;
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   // 1. Define your form.
@@ -36,10 +37,14 @@ const SignupForms = () => {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
     console.log(values);
+    setIsLoading(true);
 
     // Simula o cadastro e redireciona para a página inicial
-    alert("Cadastro realizado com sucesso!");
-    navigate("/");
+    setTimeout(() =>{
+      alert("Cadastro realizado com sucesso!");
+      setIsLoading(false);
+      navigate("/");
+    }, 1500);
   }
   return (
     <Form {...form}>
