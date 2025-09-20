@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
+import api from "@/api";
 
 import {
   Form,
@@ -13,13 +14,28 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+
 import { Input } from "@/components/ui/input";
 import { SignupValidation } from "@/lib/validation";
 import Loader from "@/components/shared/Loader";
 
 const SignupForms = () => {
   const [isLoading, setIsLoading] = useState(false);
+
   const navigate = useNavigate();
+
+  const addUser = async (userData) => {
+    try {
+      await api.post("/user", userData);
+      console.log("Usuário criado com sucesso!");
+    } catch (error) {
+      console.error("Error ao adicionar user", error);
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw error;
+    }
+  };
 
   // 1. Define your form.
   const form = useForm({
@@ -33,18 +49,30 @@ const SignupForms = () => {
   });
 
   // 2. Define a submit handler.
-  function onSubmit(values) {
+  async function onSubmit(values) {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
     console.log(values);
     setIsLoading(true);
 
-    // Simula o cadastro e redireciona para a página inicial
-    setTimeout(() =>{
+    try {
+      // Mapear os dados do formulário para o formato esperado pela API
+      const userData = {
+        username: values.username,
+        nome: values.name,
+        senha: values.password,
+        email: values.email,
+      };
+
+      await addUser(userData);
       alert("Cadastro realizado com sucesso!");
+      navigate("/sign-in"); // Redirecionar para login após sucesso
+    } catch (error) {
+      console.error("Erro no cadastro:", error);
+      alert("Erro ao realizar cadastro. Tente novamente.");
+    } finally {
       setIsLoading(false);
-      navigate("/");
-    }, 1500);
+    }
   }
   return (
     <Form {...form}>
@@ -141,7 +169,7 @@ const SignupForms = () => {
           <p className="text-small-regular text-light-2 text-center mt-2">
             Já possui uma conta?
             <Link
-              to="/signin"
+              to="/sign-in"
               className="text-primary-500 text-small-semibold ml-1"
             >
               Faça login
