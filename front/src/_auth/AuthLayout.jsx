@@ -25,7 +25,7 @@ const AuthLayout = () => {
               <Outlet />
             </section>
             <img
-              src="/assets/images/Fundo_teste_02.png"
+              src="/assets/images/FundoSJ_01.png"
               alt="logo"
               className="hidden md:block w-1/2 object-cover bg-no-repeat"
             />
