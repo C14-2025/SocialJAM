@@ -1,27 +1,22 @@
-import { Outlet } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { Button } from '@/components/ui/button';
+import { Outlet } from "react-router-dom";
+import TopBar from "@/components/shared/TopBar";
+import Leftsidebar from "@/components/shared/Leftsidebar";
+import BottomBar from "@/components/shared/BottomBar";
 
 const RootLayout = () => {
-  const { logout } = useAuth();
-
-  const handleLogout = () => {
-    logout();
-  };
-
   return (
-    <div>
-      <header>
-        <Button onClick={handleLogout}>
-          Sair
-        </Button>
-      </header>
-      
-      <main className="flex-1 flex">
-        <Outlet />
-      </main>
-    </div>
-  )
-}
+    <div className="w-full md:flex">
+      <TopBar />
 
-export default RootLayout
+      <Leftsidebar />
+
+      <section className="flex-1 flex h-full">
+        <Outlet />
+      </section>
+
+      <BottomBar />
+    </div>
+  );
+};
+
+export default RootLayout;
