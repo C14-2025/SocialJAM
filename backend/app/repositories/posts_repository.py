@@ -1,11 +1,11 @@
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 from datetime import datetime, timezone
 from app.models.mongo_posts import PostCreate
 
 class PostsRepo:
 
-    def __init__(self, db: AsyncIOMotorClient):
+    def __init__(self, db: AsyncIOMotorDatabase):
         self.db = db
 
     async def create_post(self, post: PostCreate):
@@ -22,15 +22,20 @@ class PostsRepo:
 
     async def get_post_by_id(self, post_id: str):
         post = await self.db['Posts'].find_one({'_id': ObjectId(post_id)})
-        if post:
+        if not post:
+            raise PostNotFoundError(post_id)
+        else:
             post['_id'] = str(post['_id'])
         return post
 
     async def like_post(self, post_id: str, user_id: int):
-        await self.db['Posts'].update_one(
+        result = await self.db['Posts'].update_one(
             {'_id': ObjectId(post_id)},
             {'$addToSet': {'liked_by': user_id}, '$inc': {'likes': 1}}
         )
+
+        if result.modified_count < 1:
+            raise PostNotFoundError(post_id)
 
     async def get_post_list(self, pagination: int = 20):
         # get a list of posts sorted by created_at with a pagination limit
@@ -39,4 +44,12 @@ class PostsRepo:
     
     async def delete_post(self, post_id: str):
         result = await self.db['Posts'].delete_one({'_id': ObjectId(post_id)})
+        if result.deleted_count < 1:
+            raise PostNotFoundError(post_id)
+        
         return result.deleted_count
+    
+class PostNotFoundError(Exception):
+    # Trhows this error when a post cant be found on the data base
+    def __init__(self, post_id: str):
+        super().__init__(f'Post com ID {post_id} não foi encontrado.')

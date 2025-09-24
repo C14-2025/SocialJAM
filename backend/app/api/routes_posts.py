@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.models.mongo_posts import PostCreate, PostDB
 from app.core.mongo import get_mongo_db, is_mongo_connected
-from app.repositories.posts_repository import PostsRepo
+from app.repositories.posts_repository import PostsRepo, PostNotFoundError
 from datetime import datetime, timezone
 from bson.errors import InvalidId
 
@@ -45,23 +45,24 @@ async def get_post(post_id: str, db = Depends(get_mongo_db_with_check)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Invalid ID format'
         )
-    if not post:
+    except PostNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Post not found'
         )
+
     return post
 
 @router.post('/{post_id}/like')
 async def like_post(post_id: str, current_user: dict, db = Depends(get_mongo_db_with_check)):
     repo = PostsRepo(db)
-    post = await repo.get_post_by_id(post_id)
-    if not post:
+    try:
+        await repo.like_post(post_id, current_user['id'])
+    except PostNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Post not found'
         )
-    await repo.like_post(post_id, current_user['id'])
     return {'message': 'Post liked successfully'}
 
 @router.delete('/delete/{post_id}', status_code=204)
