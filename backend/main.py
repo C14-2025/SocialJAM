@@ -8,7 +8,7 @@ from app.api.routes_posts import router as post_router
 from app.api.authentication import router as auth_router
 from app import models_sql as models
 from app.database import engine
-from app.core.mongo import connect_mongo, disconnect_mongo, get_mongo_db, apply_schemas
+from app.core.mongo import connect_mongo, disconnect_mongo, apply_schemas, is_mongo_connected
 from contextlib import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -20,24 +20,38 @@ load_dotenv()
 # connect to mongo db right after starting the server and disconnect before closing the server
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    try:
-        await connect_mongo()
-        db = get_mongo_db()
-        if db is None:
-            raise RuntimeError('Falha ao inciar o mongo')
-        await db.command('ping')
+    # Tentar conectar ao MongoDB
+    mongo_success = await connect_mongo()
+    
+    if mongo_success:
         print('Conectado ao MongoDB')
         await apply_schemas()
+    else:
+        print('Servidor iniciado sem MongoDB - algumas funcionalidades podem não estar disponíveis')
+    
+    try:
         yield
     finally:
         await disconnect_mongo()
-        print('Ecerrando conexão com mongoDB')
+        if mongo_success:
+            print('🔌 Encerrando conexão com mongoDB')
+        else:
+            print('🔌 Servidor finalizado')
     
 app = FastAPI(
     title="SocialJAM",
     description="API para socializar baseado no seu gosto musical",
     lifespan=lifespan
 )
+
+@app.get("/health")
+async def health_check():
+    """Endpoint para verificar a saúde do sistema"""
+    return {
+        "status": "ok",
+        "mongodb_connected": is_mongo_connected(),
+        "message": "Servidor funcionando" + (" com MongoDB" if is_mongo_connected() else " sem MongoDB")
+    }
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):

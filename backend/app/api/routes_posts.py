@@ -1,21 +1,30 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.models.mongo_posts import PostCreate, PostDB
-from app.core.mongo import get_mongo_db
+from app.core.mongo import get_mongo_db, is_mongo_connected
 from app.repositories.posts_repository import PostsRepo
 from datetime import datetime, timezone
 from bson.errors import InvalidId
 
 router = APIRouter(prefix='/posts', tags=['Posts'])
 
+def get_mongo_db_with_check():
+    """Dependency that verifies if mongoDB is connected"""
+    if not is_mongo_connected():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Serviço MongoDB indisponível. Funcionalidade de posts não está disponível."
+        )
+    return get_mongo_db()
+
 @router.get('/', response_model=list[PostDB])
-async def get_last_posts(pagination: int = 20, db = Depends(get_mongo_db)):
+async def get_last_posts(pagination: int = 20, db = Depends(get_mongo_db_with_check)):
     repo = PostsRepo(db)
     posts = await repo.get_post_list(pagination)
     return posts
 
 
 @router.post('/create')
-async def create_post(post: PostCreate, db = Depends(get_mongo_db)):
+async def create_post(post: PostCreate, db = Depends(get_mongo_db_with_check)):
     repo = PostsRepo(db)
     try:
         created = await repo.create_post(post)
@@ -27,7 +36,7 @@ async def create_post(post: PostCreate, db = Depends(get_mongo_db)):
     return created
 
 @router.get('/{post_id}', response_model=PostDB)
-async def get_post(post_id: str, db = Depends(get_mongo_db)):
+async def get_post(post_id: str, db = Depends(get_mongo_db_with_check)):
     repo = PostsRepo(db)
     try:
         post = await repo.get_post_by_id(post_id)
@@ -44,7 +53,7 @@ async def get_post(post_id: str, db = Depends(get_mongo_db)):
     return post
 
 @router.post('/{post_id}/like')
-async def like_post(post_id: str, current_user: dict, db = Depends(get_mongo_db)):
+async def like_post(post_id: str, current_user: dict, db = Depends(get_mongo_db_with_check)):
     repo = PostsRepo(db)
     post = await repo.get_post_by_id(post_id)
     if not post:
@@ -56,7 +65,7 @@ async def like_post(post_id: str, current_user: dict, db = Depends(get_mongo_db)
     return {'message': 'Post liked successfully'}
 
 @router.delete('/delete/{post_id}', status_code=204)
-async def delete_post(post_id: str, db = Depends(get_mongo_db)):
+async def delete_post(post_id: str, db = Depends(get_mongo_db_with_check)):
     repo = PostsRepo(db)
     result = await repo.delete_post(post_id)
     if result == 0:
