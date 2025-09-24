@@ -34,9 +34,9 @@ async def lifespan(app: FastAPI):
     finally:
         await disconnect_mongo()
         if mongo_success:
-            print('🔌 Encerrando conexão com mongoDB')
+            print('Encerrando conexão com mongoDB')
         else:
-            print('🔌 Servidor finalizado')
+            print('Servidor finalizado')
     
 app = FastAPI(
     title="SocialJAM",
