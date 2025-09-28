@@ -1,5 +1,5 @@
-import React from 'react'
 
+{/* Katao faz a boa e faz a bottom bar blz? */}
 const BottomBar = () => {
   return (
     <div></div>

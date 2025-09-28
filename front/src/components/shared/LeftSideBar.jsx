@@ -1,12 +1,20 @@
 import { sidebarLinks } from "@/constants";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import { Button } from "../ui/button";
+import { useAuth } from "@/context/AuthContext";
 
 const Leftsidebar = () => {
+  const { pathname } = useLocation();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+  };
+
   return (
     <nav
       className="leftsidebar"
       style={{
-        display: "flex",
         flexDirection: "column",
         background: "#1f1f23",
         minWidth: "270px",
@@ -16,10 +24,10 @@ const Leftsidebar = () => {
       <div className="flex flex-col gap-11">
         <Link to="/" className="flex gap-3 items-center">
           <img
-            src="/assets/images/logo.svg"
+            src="/assets/images/Logo_SJ.svg"
             alt="logo"
-            width={170}
-            height={36}
+            width={230}
+            height={20}
           />
         </Link>
 
@@ -37,34 +45,45 @@ const Leftsidebar = () => {
             <p className="body-bold">Nome do Usuário</p>
             <p className="small-regular text-gray-3">@nomeusuario</p>
           </div>
-
         </Link>
- 
+
         <ul className="flex flex-col gap-6">
           {sidebarLinks.map((link) => {
+            const isActive = pathname === link.route;
             return (
-
-              <li key={link.label}
-              className = "leftsidebar_link">
-
-                <NavLink 
+              <li
+                key={link.label}
+                className={`leftsidebar-link group ${
+                  isActive && "bg-primary-500"
+                }`}
+              >
+                <NavLink
                   to={link.route}
                   className="flex gap-4 items-center p-4"
                 >
                   <img
                     src={link.imgURL}
                     alt={link.label}
-                    className="group-hover:invert-white"
+                    className={`group-hover:invert-white ${
+                      isActive && "invert-white"
+                    }`}
                   />
                   {link.label}
- 
                 </NavLink>
               </li>
-            )
+            );
           })}
-
         </ul>
       </div>
+
+      <Button
+        variant="ghost"
+        className="shad-button_ghost"
+        onClick={handleLogout}
+      >
+        <img src="/assets/icons/logout.svg" alt="Logout" />
+        Sair
+      </Button>
     </nav>
   );
 };
