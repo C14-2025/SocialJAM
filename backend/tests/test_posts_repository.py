@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, Mock
-from app.repositories.posts_repository import PostsRepo
+from app.repositories.posts_repository import PostsRepo, PostNotFoundError
 from app.models.mongo_posts import PostCreate
 from bson.errors import InvalidId
 
@@ -41,9 +41,8 @@ async def test_get_post_by_id_not_found():
 
     repo = PostsRepo(mock_db)
 
-    post = await repo.get_post_by_id('68c70db5e711056c7db5e35c')
-
-    assert post == None
+    with pytest.raises(PostNotFoundError):
+        post = await repo.get_post_by_id('68c70db5e711056c7db5e35c')
 
 @pytest.mark.asyncio
 async def test_get_post_by_id_invalidID():
