@@ -54,3 +54,13 @@ def show_user(username: str, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Não existe usuário {username}')
     return user
+
+def update_favorite_artist(username: str, artist_name: str, db: Session = Depends(get_db)):
+    user = db.query(models_sql.User).filter(models_sql.User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Usuário {username} não encontrado')
+    
+    user.favorite_artist = artist_name
+    db.commit()
+    db.refresh(user)
+    return user

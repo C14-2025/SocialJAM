@@ -5,6 +5,7 @@ from ..database import get_db
 from typing import List
 from ..repositories import user
 from ..oauth2 import get_current_user
+from ..services.spotify_service import spotify_service
 
 
 router = APIRouter(
@@ -38,6 +39,36 @@ def update_user(username, request:schemas.User, db:Session=Depends(get_db), curr
 @router.get('/', response_model=List[schemas.ShowUser])
 def get_all_users(db:Session = Depends(get_db), current_user=Depends(get_current_user)):
     return user.get_all_users(db)
+
+@router.get('/me', status_code=200, response_model=schemas.ShowUser)
+def get_current_user_info(current_user=Depends(get_current_user)):
+    return current_user
+
+@router.put('/me/favorite-artist', status_code=200, response_model=schemas.ShowUser)
+def set_favorite_artist(
+    artist_data: schemas.FavoriteArtist,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Define o artista favorito do usuário usando o ID do Spotify"""
+    
+    # Busca informações do artista no Spotify
+    artist_info = spotify_service.get_artist_info(artist_data.artist_id)
+    
+    if not artist_info:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Artista não encontrado no Spotify"
+        )
+    
+    # Atualiza o artista favorito do usuário
+    updated_user = user.update_favorite_artist(
+        username=current_user.username,
+        artist_name=artist_info["name"],
+        db=db
+    )
+    
+    return updated_user
 
 @router.get('/{username}', status_code=200, response_model=schemas.ShowUser)
 def show_user(username,response:Response, db:Session=Depends(get_db)):

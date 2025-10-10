@@ -43,3 +43,6 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: Optional[str] = None
     email: Optional[str] = None
+
+class FavoriteArtist(BaseModel):
+    artist_id: str
