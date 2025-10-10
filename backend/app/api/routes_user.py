@@ -39,6 +39,10 @@ def update_user(username, request:schemas.User, db:Session=Depends(get_db), curr
 def get_all_users(db:Session = Depends(get_db), current_user=Depends(get_current_user)):
     return user.get_all_users(db)
 
+@router.get('/me', status_code=200, response_model=schemas.ShowUser)
+def get_current_user_info(current_user=Depends(get_current_user)):
+    return current_user
+
 @router.get('/{username}', status_code=200, response_model=schemas.ShowUser)
 def show_user(username,response:Response, db:Session=Depends(get_db)):
     return user.show_user(username, db)
