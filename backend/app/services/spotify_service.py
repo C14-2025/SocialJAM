@@ -49,6 +49,17 @@ class SpotifyService:
     
     def get_artist_info(self, artist_id: str) -> Optional[dict]:
         """Busca informações de um artista pelo ID do Spotify"""
+        
+        # Para desenvolvimento: se credenciais não estão configuradas, retorna dados mockados
+        if not self.client_id or not self.client_secret:
+            return {
+                "id": artist_id,
+                "name": f"Artista Mock (ID: {artist_id[:8]})",
+                "genres": ["pop", "rock"],
+                "popularity": 75,
+                "external_urls": {"spotify": f"https://open.spotify.com/artist/{artist_id}"}
+            }
+        
         if not self.access_token:
             self.access_token = self._get_access_token()
         
