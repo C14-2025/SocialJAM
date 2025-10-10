@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 
 {/* Katao faz a boa e faz a bottom bar blz? */}
 {/* Ja estou fazendo meu brother */}
+{/* dudu esteve aqui */}
 const BottomBar = () => {
     const { pathname } = useLocation();
 

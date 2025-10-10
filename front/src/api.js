@@ -76,4 +76,21 @@ export const getToken = () => {
     return localStorage.getItem('access_token');
 };
 
+export const getAllArtists = async () => {
+    try {
+        const response = await api.get('/artist/');
+        return {
+            success: true,
+            artists: response.data
+        };
+    } catch (error) {
+        console.error('Erro ao buscar artistas:', error);
+        return {
+            success: false,
+            error: error.response?.data?.detail || 'Erro ao buscar artistas'
+        };
+    }
+};
+
+
 export default api;
