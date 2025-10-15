@@ -1,4 +1,3 @@
-
 name: Node.js CI
 
 on:
@@ -35,3 +34,39 @@ jobs:
       run: |
         cd front
         npm run test:run
+
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    needs: test-frontend  # Executa apenas se os testes passarem
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: front/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd front
+        npm ci
+    
+    - name: Build project
+      run: |
+        cd front
+        npm run build
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: frontend-build
+        path: front/dist/
+        retention-days: 7
