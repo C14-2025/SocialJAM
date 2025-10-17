@@ -2,7 +2,7 @@ name: Backend CI/CD
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/backend-workflow-tests]
     paths: ['backend/**']
   pull_request:
     branches: [main]
