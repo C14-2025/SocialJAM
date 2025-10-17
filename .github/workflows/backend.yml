@@ -29,10 +29,10 @@ jobs:
           cd backend
           uv sync
 
-      - name: Run tests
+      - name: Run tests (without MongoDB)
         run: |
           cd backend
-          uv run pytest tests/ -v
+          uv run pytest tests/test_user.py::TestUserModel tests/test_artist.py::TestArtistModel tests/test_album.py::TestAlbumModel tests/test_authentication.py tests/test_permissions.py --tb=short --durations=5
 
   build:
     runs-on: ubuntu-latest

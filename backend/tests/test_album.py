@@ -1,27 +1,25 @@
 import pytest
 from fastapi import status
-from app import models
+from app.models_sql import Artist, Album, User
 
 
 class TestAlbumModel:
 
     
     def test_create_album_success(self, db_session, sample_artist_data, sample_album_data):
-        artist = models.Artist(
+        artist = Artist(
             nome=sample_artist_data["nome"],
             music_genre=sample_artist_data["music_genre"]
         )
         db_session.add(artist)
         db_session.commit()
         db_session.refresh(artist)
-        
-        album_data = sample_album_data.copy()
-        album_data["artist_id"] = artist.id
-        
-        new_album = models.Album(
-            nome=album_data["nome"],
-            total_tracks=album_data["total_tracks"],
-            artist_id=album_data["artist_id"]
+
+        # Act
+        new_album = Album(
+            nome=sample_album_data["nome"],
+            total_tracks=sample_album_data["total_tracks"],
+            artist_id=artist.id
         )
         db_session.add(new_album)
         db_session.commit()
@@ -29,8 +27,9 @@ class TestAlbumModel:
         
 
         assert new_album.id is not None
-        assert new_album.nome == album_data["nome"]
-        assert new_album.total_tracks == album_data["total_tracks"]
+        # Assert
+        assert new_album.nome == sample_album_data["nome"]
+        assert new_album.total_tracks == sample_album_data["total_tracks"]
         assert new_album.artist_id == artist.id
         assert new_album.criador.nome == artist.nome  
 
@@ -93,7 +92,7 @@ class TestAlbumValidation:
     
     def test_album_artist_relationship(self, db_session, sample_artist_data):
 
-        artist = models.Artist(
+        artist = Artist(
             nome=sample_artist_data["nome"],
             music_genre=sample_artist_data["music_genre"]
         )
@@ -101,8 +100,8 @@ class TestAlbumValidation:
         db_session.commit()
         db_session.refresh(artist)
         
-        album1 = models.Album(nome="Album 1", total_tracks=10, artist_id=artist.id)
-        album2 = models.Album(nome="Album 2", total_tracks=12, artist_id=artist.id)
+        album1 = Album(nome="Album 1", total_tracks=10, artist_id=artist.id)
+        album2 = Album(nome="Album 2", total_tracks=12, artist_id=artist.id)
         
         db_session.add(album1)
         db_session.add(album2)

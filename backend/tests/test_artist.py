@@ -3,7 +3,7 @@ Testes unitários para funcionalidades do artista (Artist)
 """
 import pytest
 from fastapi import status
-from app import models
+from app.models_sql import Artist, Album, User
 
 
 class TestArtistModel:
@@ -15,7 +15,7 @@ class TestArtistModel:
         artist_data = sample_artist_data
         
         # Act
-        new_artist = models.Artist(
+        new_artist = Artist(
             nome=artist_data["nome"],
             music_genre=artist_data["music_genre"]
         )
