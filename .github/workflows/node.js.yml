@@ -7,8 +7,8 @@ on:
     branches: [ "main" ]
 
 jobs:
-  test-frontend:
-    name: Test Frontend
+  test-unit:
+    name: Unit Tests (Forms & Auth)
     runs-on: ubuntu-latest
 
     strategy:
@@ -30,15 +30,43 @@ jobs:
         cd front
         npm ci
     
-    - name: Run tests
+    - name: Run unit tests (forms)
       run: |
         cd front
-        npm run test:run
+        npm run test:run -- src/_testes/forms
+
+  test-components:
+    name: Component Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+       
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: front/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd front
+        npm ci
+    
+    - name: Run component tests
+      run: |
+        cd front
+        npm run test:run -- src/_testes/components
 
   build-frontend:
     name: Build Frontend
     runs-on: ubuntu-latest
-    needs: test-frontend  # Executa apenas se os testes passarem
+    needs: [test-unit, test-components]  # Executa apenas se os testes passarem
 
     strategy:
       matrix:
