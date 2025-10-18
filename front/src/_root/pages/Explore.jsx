@@ -7,7 +7,6 @@ const Explore = () => {
     {
       id: 1,
       name: 'Milton Nascimento',
-      photo: '/assets/images/profile.png',
       followers: 1500000,
       genres: ['MPB', 'Jazz', 'Bossa Nova'],
       popularity: 75
@@ -15,7 +14,6 @@ const Explore = () => {
     {
       id: 2,
       name: 'Geordie Greep',
-      photo: '/assets/images/profile.png',
       followers: 250000,
       genres: ['Math Rock', 'Progressive Rock', 'Experimental'],
       popularity: 68
@@ -23,7 +21,6 @@ const Explore = () => {
     {
       id: 3,
       name: 'Fiona apple',
-      photo: '/assets/images/profile.png',
       followers: 2100000,
       genres: ['MPB', 'Samba', 'Bossa Nova'],
       popularity: 82
@@ -31,7 +28,6 @@ const Explore = () => {
     {
       id: 4,
       name: 'King Crimson',
-      photo: '/assets/images/profile.png',
       followers: 1800000,
       genres: ['Progressive Rock', 'Art Rock'],
       popularity: 70
@@ -39,7 +35,6 @@ const Explore = () => {
     {
       id: 5,
       name: 'Chico Buarque',
-      photo: '/assets/images/profile.png',
       followers: 1900000,
       genres: ['MPB', 'Samba', 'Bossa Nova'],
       popularity: 78
@@ -47,7 +42,6 @@ const Explore = () => {
     {
       id: 6,
       name: 'black midi',
-      photo: '/assets/images/profile.png',
       followers: 320000,
       genres: ['Experimental Rock', 'Math Rock', 'Noise Rock'],
       popularity: 65
@@ -55,7 +49,6 @@ const Explore = () => {
     {
       id: 7,
       name: 'bitols',
-      photo: '/assets/images/profile.png',
       followers: 8500000,
       genres: ['Alternative Rock', 'Art Rock', 'Electronic'],
       popularity: 88

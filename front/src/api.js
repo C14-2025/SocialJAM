@@ -92,5 +92,20 @@ export const getAllArtists = async () => {
     }
 };
 
+export const getMe= async () => {
+    try {
+        const response = await api.get('/user/me');
+        return {
+            success: true,
+            me: response.data
+        };
+    } catch (error) {
+        console.error('Erro ao buscar informações do usuário:', error);
+        return {
+            success: false,
+            error: error.response?.data?.detail || 'ERRO'
+        };
+    }
+};
 
 export default api;

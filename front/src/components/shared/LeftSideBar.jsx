@@ -3,14 +3,17 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { Button } from "../ui/button";
 import { useAuth } from "@/context/AuthContext";
 
+
 const Leftsidebar = () => {
   const { pathname } = useLocation();
-  const { logout } = useAuth();
+  const { logout,user } = useAuth();
+  
 
   const handleLogout = () => {
     logout();
   };
 
+  
   return (
     <nav
       className="leftsidebar"
@@ -34,7 +37,7 @@ const Leftsidebar = () => {
         {/* precisamos fazer a imagem e o nome serem dinâmicos de acordo com o usuário !!!!*/}
         <Link to={"/profile"} className="flex gap-3 items-center">
           <img
-            src="/assets/images/profile.png"
+            src='/assets/icons/profile-placeholder.svg'
             alt="profile"
             width={24}
             height={24}
@@ -42,8 +45,7 @@ const Leftsidebar = () => {
           />
 
           <div className="flex flex-col">
-            <p className="body-bold">Nome do Usuário</p>
-            <p className="small-regular text-gray-3">@nomeusuario</p>
+            <p className="body-bold">{user?.nome || ""} </p>
           </div>
         </Link>
 

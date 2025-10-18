@@ -13,10 +13,12 @@ import EditPost from "./_root/pages/EditPost";
 import PostDetails from "./_root/pages/PostDetails";
 import Profile from "./_root/pages/Profile";
 import UpdateProfile from "./_root/pages/UpdateProfile";
-
+import { useAuth } from "./context/AuthContext";
 
 
 const App = () => {
+  const { user } = useAuth();
+
   return (
     <main className="flex h-screen">
       <Routes>
@@ -39,7 +41,8 @@ const App = () => {
           <Route path="/create-post" element={<CreatePost />} />
           <Route path="/update-post/:id" element={<EditPost />} />
           <Route path="/post/:id" element={<PostDetails />} />
-          <Route path="/profile/:id/*" element={<Profile />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile/:username" element={<Profile />}/>
           <Route path="/update-profile/:id" element={<UpdateProfile />} />
         </Route>
 
