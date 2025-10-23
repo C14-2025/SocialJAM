@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getAllArtists } from '@/api';
+import { use } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Explore = () => {
   //provisório, só até a implementação do spotify api
@@ -55,6 +57,7 @@ const Explore = () => {
     }
   ]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchArtists = async () => {
@@ -69,6 +72,10 @@ const Explore = () => {
     // pra usar a api de vdd tem que descomentar
     // fetchArtists();
   }, []);
+
+  const handleArtistClick = (artistId) => {
+    navigate(`/artist/${artistId}`);
+  }
 
   if (loading) {
     return (
@@ -85,7 +92,11 @@ const Explore = () => {
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-7">
           {artists.map((artist) => (
-            <div key={artist.id} className="bg-dark-3 rounded-2xl cursor-pointer transition-transform duration-300 ease-in-out hover:scale-105 hover:shadow-xl p-4">
+            <div 
+              key={artist.id} 
+              className="bg-dark-3 rounded-2xl cursor-pointer transition-transform duration-300 ease-in-out hover:scale-105 hover:shadow-xl p-4"
+              onClick={() => handleArtistClick(artist.id)}
+            >
               <img 
                 src={artist.photo || '/assets/icons/profile-placeholder.svg'} 
                 alt={artist.name}
