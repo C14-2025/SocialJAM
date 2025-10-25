@@ -19,7 +19,7 @@ describe('TopBar', () => {
     renderComponent();
     const logo = screen.getByAltText('logo');
     expect(logo).toBeInTheDocument();
-    expect(logo).toHaveAttribute('src', '/assets/images/logo.svg');
+    expect(logo).toHaveAttribute('src', '/assets/images/Logo_SJ.svg');
   });
 
   it('deve renderizar link do logo apontando para home', () => {
