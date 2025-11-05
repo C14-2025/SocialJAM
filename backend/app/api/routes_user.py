@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends, status, Response, HTTPException
+from fastapi import APIRouter, Depends, status, Response, HTTPException, File, UploadFile
 from .. import schemas
 from sqlalchemy.orm import Session
 from ..database import get_db
-from typing import List
+from typing import List, Annotated
 from ..repositories import user
 from ..oauth2 import get_current_user
 from ..services.spotify_service import spotify_service
+from .. import models_sql
+import os
 
 
 router = APIRouter(
@@ -73,3 +75,31 @@ def set_favorite_artist(
 @router.get('/{username}', status_code=200, response_model=schemas.ShowUser)
 def show_user(username,response:Response, db:Session=Depends(get_db)):
     return user.show_user(username, db)
+
+@router.post('/upload-photo', status_code=200)
+async def upload_profile_picture(
+    file: Annotated[UploadFile, File()],
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    
+    filename = file.filename
+    content_type = file.content_type
+
+    contents = await file.read()
+
+    if not os.path.exists(f'images/pfp/{current_user.username}'):
+        os.makedirs(f'images/pfp/{current_user.username}')
+
+    with open(f'images/pfp/{current_user.username}/{filename}', 'wb') as f:
+        f.write(contents)
+
+
+    file_url = f'backend/images/pfp/{current_user.username}/{filename}'
+    # Atualiza a URL da foto do usuário no banco de dados
+    user_record = db.query(models_sql.User).filter(models_sql.User.id == current_user.id).first()
+    user_record.user_photo_url = file_url  # Aqui você pode usar uma URL pública se estiver usando um serviço de armazenamento
+    db.commit()
+    db.refresh(user_record)
+
+    return {"filename": filename, "content_type": content_type, "message": "Upload successful"}
