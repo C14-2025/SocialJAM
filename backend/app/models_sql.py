@@ -1,6 +1,7 @@
 from .database import base
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, UniqueConstraint, Boolean
 from sqlalchemy.orm import relationship
+from datetime import datetime
 
 class User(base):
     __tablename__ = 'user'
@@ -30,3 +31,49 @@ class Album(base):
     artist_id = Column(Integer, ForeignKey('artist.id'))
     
     criador = relationship("Artist", back_populates="albums")
+
+class FriendRequest(base):
+    __tablename__ = "friend_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    sender_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    receiver_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+
+    status = Column(String, default="Pending") #Isso pode ser Pending, Accepted, Denied,
+    created_at = Column(DateTime, default=datetime.now)
+
+    __table_args__ = (
+        UniqueConstraint("sender_id", "receiver_id", name="unique_friend_request"),
+    )
+
+    sender = relationship("User", foreign_keys=[sender_id])
+    receiver = relationship("User", foreign_keys=[receiver_id])
+
+
+class Friendship(base):
+    __tablename__ = "friendship"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user1_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    user2_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+
+    created_at = Column(DateTime, default=datetime.now)
+
+    __table_args__ = (
+        UniqueConstraint("user1_id", "user2_id", name="unique_friendship"),
+    )
+
+class Notification(base):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+
+    type = Column(String)   #pode ser friend_request, system, message, e outras pombas para caso precise escalonar
+    content = Column(String)
+    read = Column(Boolean, default=False)
+
+    created_at = Column(DateTime, default=datetime.now)
+
+    user = relationship("User", foreign_keys=[user_id])
