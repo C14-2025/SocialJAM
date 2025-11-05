@@ -9,6 +9,7 @@ class User(BaseModel):
     email: EmailStr
     
 class ShowUser(BaseModel):
+    id: int
     username: str
     nome: str
     email: str
