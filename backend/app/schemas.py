@@ -13,7 +13,7 @@ class ShowUser(BaseModel):
     username: str
     nome: str
     email: str
-    photo: Optional[str] = None
+    user_photo_url: Optional[str] = None
     favorite_artist: Optional[str] = None
     class Config:
         orm_mode = True
@@ -89,3 +89,8 @@ class FriendRequestCreate(BaseModel):
 
 class FriendRequestResponse(BaseModel):
     response: str  # "accepted" or "denied"
+
+class GetProfilePictureResponse(BaseModel):
+    user_photo_url: str
+    class Config:
+        orm_mode = True
