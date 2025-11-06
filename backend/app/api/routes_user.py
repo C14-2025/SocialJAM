@@ -103,3 +103,8 @@ async def upload_profile_picture(
     db.refresh(user_record)
 
     return {"filename": filename, "content_type": content_type, "message": "Upload successful"}
+
+@router.get('/pesquisar/{input}', status_code=200, response_model=List[schemas.ShowUser])
+def search_users(input: str, db:Session=Depends(get_db)):
+    users = db.query(models_sql.User).filter(models_sql.User.username.ilike(f"{input}%")).all()
+    return users
