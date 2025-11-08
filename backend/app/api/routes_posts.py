@@ -1,20 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.models.mongo_posts import PostCreate, PostDB, CommentCreate, CommentDB
-from app.core.mongo import get_mongo_db, is_mongo_connected
+from app.core.mongo import get_mongo_db_with_check
 from app.repositories.posts_repository import PostsRepo, PostNotFoundError
 from app.repositories.comments_repository import CommentsRepo, CommentNotFoundError
 from bson.errors import InvalidId
 
 router = APIRouter(prefix='/posts', tags=['Posts'])
-
-def get_mongo_db_with_check():
-    """Dependency that verifies if mongoDB is connected"""
-    if not is_mongo_connected():
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Serviço MongoDB indisponível. Funcionalidade de posts não está disponível."
-        )
-    return get_mongo_db()
 
 @router.get('/', response_model=list[PostDB])
 async def get_last_posts(pagination: int = 20, db = Depends(get_mongo_db_with_check)):
