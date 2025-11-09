@@ -3,6 +3,10 @@ from .. import models_sql, schemas
 from ..database import get_db
 from fastapi import Depends, status, HTTPException
 from ..core.security import Hash
+from app.repositories.users_cache_repository import UserCacheRepo
+from app.models.mongo_users import UserCache
+from app.core.mongo import get_mongo_db_with_check
+from datetime import datetime
 
 def get_all_users(db:Session=Depends(get_db)):
     users = db.query(models_sql.User).all()
@@ -12,7 +16,9 @@ def get_user(username: str, db: Session = Depends(get_db)):
     user = db.query(models_sql.User).filter(models_sql.User.username == username).first()
     return user
 
-def create_user(request_user: schemas.User, db: Session = Depends(get_db)):
+def create_user(request_user: schemas.User, db: Session = Depends(get_db), mongo = Depends(get_mongo_db_with_check)):
+    # mongoDB cache instance
+    cache = UserCacheRepo(mongo)
     usernameaux = request_user.username
     if "@" in usernameaux:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Username não pode conter '@'")
@@ -25,6 +31,15 @@ def create_user(request_user: schemas.User, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+    # update the users cache on mongoDB
+    cache.upsert_user_cache(
+        user=UserCache(
+            _id = new_user.id,
+            name=new_user.nome,
+            user_photo_url=new_user.user_photo_url,
+            updated_at=datetime.now()
+        )
+    )
     return new_user
 
 def delete_user(username: str, db: Session = Depends(get_db)):
@@ -35,7 +50,9 @@ def delete_user(username: str, db: Session = Depends(get_db)):
     db.commit()
     return f"{username} deletado"
 
-def update_user(username: str, request: schemas.User, db: Session = Depends(get_db)):
+def update_user(username: str, request: schemas.User, db: Session = Depends(get_db), mongo = Depends(get_mongo_db_with_check)):
+    # mongoDB cache instance
+    cache = UserCacheRepo(mongo)
     user = db.query(models_sql.User).filter(models_sql.User.username == username)
     if not user.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User {username} não foi encontrado")
@@ -47,6 +64,19 @@ def update_user(username: str, request: schemas.User, db: Session = Depends(get_
     
     user.update(update_data)
     db.commit()
+    
+    # Get the updated user to refresh the cache
+    updated_user = user.first()
+    # update the users cache on mongoDB
+    cache.upsert_user_cache(
+        user=UserCache(
+            _id = updated_user.id,
+            name=updated_user.nome,
+            user_photo_url=updated_user.user_photo_url,
+            updated_at=datetime.now()
+        )
+    )
+    
     return "User Updated"
 
 def show_user(username: str, db: Session = Depends(get_db)):

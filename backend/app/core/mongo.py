@@ -1,6 +1,7 @@
 import json
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
+from fastapi import HTTPException, status
 
 class MongoSettings():
     MONGO_URI: str = "mongodb://localhost:27017"
@@ -42,6 +43,15 @@ def get_mongo_db():
 
 def is_mongo_connected():
     return mongo_connected
+
+def get_mongo_db_with_check():
+    """Dependency that verifies if mongoDB is connected"""
+    if not is_mongo_connected():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Serviço MongoDB indisponível. Funcionalidade de posts não está disponível."
+        )
+    return get_mongo_db()
 
 async def apply_schemas():
     if not mongo_connected or db is None:
