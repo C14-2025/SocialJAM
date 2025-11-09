@@ -37,15 +37,17 @@ const Leftsidebar = () => {
         {/* precisamos fazer a imagem e o nome serem dinâmicos de acordo com o usuário !!!!*/}
         <Link to={"/profile"} className="flex gap-3 items-center">
           <img
-            src='/assets/icons/profile-placeholder.svg'
+            src={user?.user_photo_url ? `http://localhost:8000/${user?.user_photo_url}` : '/assets/icons/profile-placeholder.svg'}
             alt="profile"
             width={24}
             height={24}
-            className="h-14 w-14 rounded-full"
+            className={`h-14 w-14 rounded-full object-cover border-2 shadow-lg ${
+              user?.user_photo_url ? 'border-primary-500' : 'border-gray-600'
+            }`}
           />
 
           <div className="flex flex-col">
-            <p className="body-bold">{user?.nome || ""} </p>
+            <p className="body-bold">{user?.username || ""} </p>
           </div>
         </Link>
 
