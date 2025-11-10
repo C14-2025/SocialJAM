@@ -92,6 +92,22 @@ export const getAllArtists = async () => {
     }
 };
 
+export const getUser = async () => {
+    try {
+        const response = await api.get('');
+        return {
+            success: true,
+            artists: response.data
+        };
+    } catch (error) {
+        console.error('Erro ao buscar usuarios:', error);
+        return {
+            success: false,
+            error: error.response?.data?.detail || 'Erro ao buscar usuarios'
+        };
+    }
+};
+
 export const getMe= async () => {
     try {
         const response = await api.get('/user/me');
@@ -107,5 +123,31 @@ export const getMe= async () => {
         };
     }
 };
+
+export const searchUsers = async (searchTerm) => {
+    try {
+        if (!searchTerm || searchTerm.trim() === '') {
+            return {
+                success: true,
+                users: []
+            };
+        }
+        
+        const response = await api.get(`/user/pesquisar/${searchTerm}`);
+        return {
+            success: true,
+            users: response.data
+        };
+    } catch (error) {
+        console.error('Erro ao buscar usuários:', error);
+        return {
+            success: false,
+            error: error.response?.data?.detail || 'Erro ao buscar usuários',
+            users: []
+        };
+    }
+};
+
+
 
 export default api;

@@ -27,7 +27,7 @@ const Profile = () => {
     }
 
     return(
-    <CardUser nomeUsuario = {user?.nome} artistaFav = {user?.nome} ></CardUser>
+    <CardUser image={user?.user_photo_url ? `http://localhost:8000/${user?.user_photo_url}` : null} nomeUsuario = {user?.username} artistaFav = {user?.nome} ></CardUser> //o ? retorna undefined caso n conseguir achar
     )
    
 };
