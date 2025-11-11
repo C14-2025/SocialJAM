@@ -65,6 +65,7 @@ export const AuthProvider = ({ children }) => {
         user, //aqui ele passa ela pra uso
         login,
         logout,
+        refreshUser: loadUserData, 
         token: getToken(),
     };
 
