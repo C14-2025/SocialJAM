@@ -3,18 +3,6 @@ from .. import models_sql
 from typing import Dict, List
 
 def sync_top_artists(spotify_artists_data: Dict, db: Session):
-    """
-    Sincroniza os artistas mais ouvidos do Spotify com o banco de dados.
-    Se o artista já existe, atualiza suas informações.
-    Se é novo, cria um novo registro.
-    
-    Args:
-        spotify_artists_data: Dados retornados pela API do Spotify contendo os artistas
-        db: Sessão do banco de dados
-    
-    Returns:
-        Lista de artistas sincronizados
-    """
     synced_artists = []
     
     if "items" in spotify_artists_data:

@@ -19,7 +19,6 @@ class SpotifyAuthService:
             raise ValueError("SPOTIFY_CLIENT_ID e SPOTIFY_CLIENT_SECRET não estão configurados no .env")
     
     def get_auth_url(self):
-        """Retorna a URL para autenticação com Spotify"""
         sp_oauth = SpotifyOAuth(
             client_id=self.client_id,
             client_secret=self.client_secret,
@@ -30,7 +29,6 @@ class SpotifyAuthService:
         return auth_url
     
     def get_access_token(self, code: str):
-        """Troca o código de autorização por um token de acesso"""
         sp_oauth = SpotifyOAuth(
             client_id=self.client_id,
             client_secret=self.client_secret,
@@ -41,7 +39,6 @@ class SpotifyAuthService:
         return token_info.get("access_token")
     
     def get_top_artists(self, access_token: str, limit: int = 50):
-        """Recupera os 50 artistas mais ouvidos do usuário"""
         sp = spotipy.Spotify(auth=access_token)
         results = sp.current_user_top_artists(limit=limit)
         return results
