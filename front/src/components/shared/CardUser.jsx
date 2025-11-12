@@ -1,9 +1,9 @@
-export default function CardUser({image, nomeUsuario, artistaFav}) {
+export default function CardUser({image, nomeUsuario, artistaFav, showEditButton, onEditClick}) {
     return (
         <div className="flex flex-col justify-center items-center h-screen mx-auto text-center">
             
             
-            <div className="mb-8">
+            <div className="mb-8 relative">
                 {image ? (
                     <img 
                         src={image} 
@@ -16,6 +16,19 @@ export default function CardUser({image, nomeUsuario, artistaFav}) {
                         alt="Foto de perfil padrão"
                         className="h-[300px] w-[300px] rounded-full object-cover border-4 border-gray-600 shadow-2xl bg-gray-800 p-8"
                     />
+                )}
+                
+                {showEditButton && (
+                    <button 
+                        onClick={onEditClick}
+                        className="absolute bottom-2 right-2 bg-primary-500 hover:bg-primary-600 rounded-full p-3 shadow-lg transition-all duration-200 hover:scale-110"
+                    >
+                        <img 
+                            src="/assets/icons/edit.svg" 
+                            alt="Editar" 
+                            className="w-6 h-6 invert brightness-0 invert"
+                        />
+                    </button>
                 )}
             </div>
 

@@ -148,6 +148,30 @@ export const searchUsers = async (searchTerm) => {
     }
 };
 
+export const uploadProfilePicture = async (file) => {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await api.post('/user/upload-photo', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+
+        return {
+            success: true,
+            data: response.data
+        };
+    } catch (error) {
+        console.error('Erro ao fazer upload da foto:', error);
+        return {
+            success: false,
+            error: error.response?.data?.detail || 'Erro ao fazer upload da foto'
+        };
+    }
+};
+
 
 
 export default api;
