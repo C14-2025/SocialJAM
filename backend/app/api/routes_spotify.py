@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from .. import database
 from ..services.spotify_auth_service import SpotifyAuthService
@@ -8,11 +9,10 @@ router = APIRouter(prefix="/spotify", tags=["spotify"])
 
 @router.get("/login")
 async def spotify_login():
-    """Retorna a URL para login com Spotify"""
     try:
         auth_service = SpotifyAuthService()
         auth_url = auth_service.get_auth_url()
-        return {"auth_url": auth_url}
+        return RedirectResponse(url=auth_url, status_code=302)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -21,10 +21,6 @@ async def spotify_login():
 
 @router.get("/callback")
 async def spotify_callback(code: str, db: Session = Depends(database.get_db)):
-    """
-    Callback do Spotify - recebe o código de autorização e retorna o token de acesso.
-    Este endpoint não deve ser acessado diretamente pelo cliente, apenas pelo Spotify.
-    """
     try:
         auth_service = SpotifyAuthService()
         access_token = auth_service.get_access_token(code)
@@ -44,17 +40,6 @@ async def spotify_callback(code: str, db: Session = Depends(database.get_db)):
 
 @router.get("/top-artists")
 async def get_top_artists(access_token: str, db: Session = Depends(database.get_db)):
-    """
-    Recupera os 50 artistas mais ouvidos do usuário no Spotify.
-    Sincroniza os artistas com o banco de dados.
-    Retorna o JSON recebido da API do Spotify.
-    
-    Args:
-        access_token: Token de acesso do Spotify obtido após autenticação
-    
-    Returns:
-        JSON completo da API do Spotify contendo os 50 artistas mais ouvidos
-    """
     try:
         if not access_token:
             raise HTTPException(
