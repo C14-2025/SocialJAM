@@ -13,6 +13,9 @@ class User(base):
     senha = Column(String)
     favorite_artist = Column(String, nullable=True)
     user_photo_url = Column(String, nullable=True)
+    spotify_user_token = Column(String, nullable=True)
+    spotify_refresh_token = Column(String, nullable=True)
+    spotify_expires_at = Column(DateTime, nullable=True)
     
 class Artist(base):
     __tablename__ = 'artist'
