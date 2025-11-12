@@ -2,6 +2,7 @@ import uvicorn
 from app.api.routes_album import router as album_router
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from app.api.routes_user import router as user_router
 from app.api.routes_artist import router as artist_router
 from app.api.routes_posts import router as post_router
@@ -81,6 +82,10 @@ app.add_middleware(
 )
 
 models.base.metadata.create_all(engine)
+
+# essa linha serve pra dar pra buscar imagem no backend
+app.mount("/backend/images", StaticFiles(directory="images"), name="static")
+
 app.include_router(user_router)
 app.include_router(artist_router)
 app.include_router(album_router)
