@@ -7,6 +7,7 @@ from app.api.routes_artist import router as artist_router
 from app.api.routes_posts import router as post_router
 from app.api.authentication import router as auth_router
 from app.api.friendlist import router as friends_router
+from app.api.routes_spotify import router as spotify_router
 from app import models_sql as models
 from app.database import engine
 from app.core.mongo import connect_mongo, disconnect_mongo, apply_schemas, is_mongo_connected
@@ -86,6 +87,7 @@ app.include_router(album_router)
 app.include_router(post_router)
 app.include_router(auth_router)
 app.include_router(friends_router)
+app.include_router(spotify_router)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", port=8000, reload=True)
