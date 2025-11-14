@@ -94,3 +94,27 @@ def update_favorite_artist(username: str, artist_name: str, db: Session = Depend
     db.commit()
     db.refresh(user)
     return user
+
+def update_spotify_tokens(user_id: int, access_token: str, refresh_token: str, expires_at: datetime, db: Session):
+    user = db.query(models_sql.User).filter(models_sql.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'Usuário não encontrado')
+    
+    user.spotify_user_token = access_token
+    if refresh_token:  
+        user.spotify_refresh_token = refresh_token
+    user.spotify_expires_at = expires_at
+    db.commit()
+    db.refresh(user)
+    return user
+
+def get_user_spotify_tokens(user_id: int, db: Session):
+    user = db.query(models_sql.User).filter(models_sql.User.id == user_id).first()
+    if not user:
+        return None
+    
+    return {
+        "access_token": user.spotify_user_token,
+        "refresh_token": user.spotify_refresh_token,
+        "expires_at": user.spotify_expires_at
+    }
