@@ -70,7 +70,7 @@ const Profile = () => {
     }
 
     return(
-        <>
+        <div className="flex flex-1 min-h-screen bg-user bg-fixed">
             <CardUser 
                 image={user?.user_photo_url ? `http://localhost:8000/${user?.user_photo_url}` : null} 
                 nomeUsuario={user?.username} 
@@ -88,7 +88,7 @@ const Profile = () => {
                         </DrawerDescription>
                     </DrawerHeader>
                     
-                    <div className="px-4 pb-2 space-y-3">
+                    <div className="px-4 pb-2 space-y-3 ">
                         <div className="space-y-1">
                             <label className="text-sm font-medium text-light-1">Nome de usuário</label>
                             <input 
@@ -129,7 +129,7 @@ const Profile = () => {
                     </DrawerFooter>
                 </DrawerContent>
             </Drawer>
-        </>
+        </div>
     )
    
 };

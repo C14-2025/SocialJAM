@@ -84,10 +84,31 @@ const Explore = () => {
       </div>
     );
   }
+  //imagens para ficarem passando no fundo qualquer coisa deem sugestoes no grupo ou coloquem aqui
+  const backgrounds = [
+  "/assets/images/fredao_2.jpg",
+  "/assets/images/davemusta.png",
+  "/assets/images/kendrick.png",
+  "/assets/images/rihanna.png",
+  ];
+
+  const [bgIndex, setBgIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+    setBgIndex((prev) => (prev + 1) % backgrounds.length);
+    }, 10000); // troca a imagem a cada 10 segundos se quiserem podem mudar o tempo
+
+    return () => clearInterval(interval);
+  }, []);
+
 
   return (
-    <div className="flex flex-1">
-      <div className="common-container">
+    <div className="flex flex-1 min-h-screen bg-slideshow"
+    style={{
+    backgroundImage: `url(${backgrounds[bgIndex]})`,
+    }}>
+      <div className="common-container bg-black/40 backdrop-blur-sm rounded-xl p-6">
         <h1 className="h3-bold md:h2-bold text-left w-full mb-8">Explorar Artistas</h1>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-7">
