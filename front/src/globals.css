@@ -244,6 +244,27 @@
   .user-card {
     @apply flex-center flex-col gap-4 border border-dark-4 rounded-[20px] px-5 py-8;
   }
+
+  /* coisa aqui pra deixar as imagens de fundo na pagina explore */ 
+  .bg-slideshow {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: background-image 1s ease-in-out;
+  }
+  /* essa aqui é do all users*/
+  .bg-exploreusers {
+    background-image: url('/assets/images/amigos3.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .bg-user {
+    background-image: url('/assets/images/perfilfundo.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
 }
 
 @layer components {

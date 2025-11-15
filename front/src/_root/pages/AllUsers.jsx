@@ -88,7 +88,7 @@ const AllUsers = () => {
 
   // Caso contrário, mostra a busca
   return (
-    <div className="flex flex-1">
+    <div className="flex flex-1 min-h-screen bg-exploreusers bg-fixed">
       <div className="common-container">
         <div className="user-container">
           <h2 className="h3-bold md:h2-bold text-left w-full">All Users</h2>
