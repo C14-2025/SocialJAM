@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import requests
+import base64
 
 load_dotenv()
 
@@ -45,6 +46,22 @@ class SpotifyAuthService:
             "expires_at": datetime.now() + timedelta(seconds=token_info.get("expires_in", 3600))
         }
     
+    # get application access token
+    def get_app_access_token(self):
+        url = "https://accounts.spotify.com/api/token"
+        headers = {
+            "Authorization": "Basic " + base64.b64encode(f"{self.client_id}:{self.client_secret}".encode()).decode(),
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+        data = {
+            "grant_type": "client_credentials"
+        }
+        
+        response = requests.post(url, headers=headers, data=data)
+        response.raise_for_status()
+        
+        return response.json()["access_token"]
+
     def refresh_access_token(self, refresh_token: str):
         try:
             token_url = "https://accounts.spotify.com/api/token"
@@ -80,3 +97,52 @@ class SpotifyAuthService:
         sp = spotipy.Spotify(auth=access_token)
         results = sp.current_user_top_artists(limit=limit)
         return results
+
+    def get_artist_albums(self, artist_name: str):
+        base_url = "https://api.spotify.com/v1"
+        token = self.get_app_access_token()  
+        
+        headers = {"Authorization": f"Bearer {token}"}
+
+        search_url = f"{base_url}/search"
+        search_params = {
+            "q": artist_name,
+            "type": "artist",
+            "limit": 1
+        }
+
+        artist_res = requests.get(search_url, headers=headers, params=search_params)
+        artist_data = artist_res.json()
+
+        if not artist_data.get("artists", {}).get("items"):
+            return {"albums": []}
+
+        artist = artist_data["artists"]["items"][0]
+        artist_id = artist["id"]
+
+        albums_url = f"{base_url}/artists/{artist_id}/albums"
+        albums_params = {"limit": 50, "include_groups": "album,single"}
+
+        albums_res = requests.get(albums_url, headers=headers, params=albums_params)
+        albums_data = albums_res.json()
+
+        raw_albums = albums_data.get("items", [])
+
+        cleaned_albums = []
+
+        for album in raw_albums:
+            cleaned_albums.append({
+                "name": album.get("name"),
+                "release_date": album.get("release_date"),
+                "total_tracks": album.get("total_tracks"),
+                "image": (
+                    album.get("images")[0]["url"]
+                    if album.get("images") and len(album["images"]) > 0
+                    else None
+                )
+            })
+
+        return {
+            "artist": artist.get("name"),
+            "albums": cleaned_albums
+        }

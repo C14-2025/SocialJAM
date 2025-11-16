@@ -6,6 +6,7 @@ from ..services.spotify_auth_service import SpotifyAuthService
 from ..repositories.spotify_artists_repository import sync_top_artists
 from ..repositories.artist import show_all_artists
 from ..repositories.user import update_spotify_tokens, get_user_spotify_tokens
+from ..repositories.spotify_albums_repository import get_all_albums_from_artists
 from datetime import datetime
 import json
 import base64
@@ -148,4 +149,27 @@ async def get_top_artists(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao recuperar artistas do Spotify: {str(e)}"
+        )
+
+@router.get("/albums")
+async def get_all_albums(
+    db: Session = Depends(database.get_db),
+):
+    try:
+        albums = get_all_albums_from_artists(db)
+        
+        if not albums:
+            return {
+                "message": "Nenhum álbum encontrado",
+                "albums": []
+            }
+        
+        return {
+            "total": len(albums),
+            "albums": albums
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao recuperar álbuns: {str(e)}"
         )
