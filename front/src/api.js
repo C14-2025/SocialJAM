@@ -172,54 +172,6 @@ export const uploadProfilePicture = async (file) => {
     }
 };
 
-export const sendFriendRequest = async (receiverId) => {
-    try {
-        const response = await api.post(`/friends/request/${receiverId}`);
-        return {
-            success: true,
-            data: response.data
-        };
-    } catch (error) {
-        console.error('Erro ao enviar solicitação de amizade:', error);
-        return {
-            success: false,
-            error: error.response?.data?.detail || 'Erro ao enviar solicitação de amizade'
-        };
-    }
-};
-
-export const getSentFriendRequests = async () => {
-    try {
-        const response = await api.get('/friends/requests/sent');
-        return {
-            success: true,
-            data: response.data
-        };
-    } catch (error) {
-        console.error('Erro ao buscar solicitações enviadas:', error);
-        return {
-            success: false,
-            error: error.response?.data?.detail || 'Erro ao buscar solicitações enviadas'
-        };
-    }
-};
-
-export const getFriends = async () => {
-    try {
-        const response = await api.get('/friends/');
-        return {
-            success: true,
-            data: response.data
-        };
-    } catch (error) {
-        console.error('Erro ao buscar amigos:', error);
-        return {
-            success: false,
-            error: error.response?.data?.detail || 'Erro ao buscar amigos'
-        };
-    }
-};
-
 
 
 export default api;

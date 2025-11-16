@@ -1,8 +1,6 @@
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '@/components/ui/input-group'
-import { Button } from '@/components/ui/button'
 import React, { useState, useEffect } from 'react'
-import { searchUsers, sendFriendRequest, getSentFriendRequests, getFriends } from '@/api'
-import { useAuth } from '@/context/AuthContext';
+import { searchUsers } from '@/api'
 import { useNavigate, useParams } from 'react-router-dom'
 import CardUser from '@/components/shared/CardUser'
 
@@ -11,9 +9,6 @@ const AllUsers = () => {
   const [users, setUsers] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
-  const [sentRequests, setSentRequests] = useState([])
-  const [friends, setFriends] = useState([])
-  const [buttonLoading, setButtonLoading] = useState(false)
   const navigate = useNavigate()
   const { username } = useParams()
 
@@ -27,39 +22,6 @@ const AllUsers = () => {
     navigate('/all-users')
   }
 
-  const handleSendRequest = async (userId) => {
-    setButtonLoading(true)
-    const result = await sendFriendRequest(userId)
-    
-    if (result.success) {
-      //atualiza a lista de solicitações enviadas
-      setSentRequests(prev => [...prev, result.data])
-    } else {
-      alert(result.error)
-    }
-    
-    setButtonLoading(false)
-  }
-
-  //busca solicitações enviadas e amigs ao carregar
-  useEffect(() => {
-    const fetchRequestsAndFriends = async () => {
-      const [requestsResult, friendsResult] = await Promise.all([
-        getSentFriendRequests(),
-        getFriends()
-      ])
-      
-      if (requestsResult.success) {
-        setSentRequests(requestsResult.data)
-      }
-      
-      if (friendsResult.success) {
-        setFriends(friendsResult.data)
-      }
-    }
-    
-    fetchRequestsAndFriends()
-  }, [])
 
   useEffect(() => {
     if (username && users.length > 0) {
@@ -100,9 +62,6 @@ const AllUsers = () => {
 
   //se tiver username na url e usuário selecionado, mostra o perfil
   if (username && selectedUser) {
-    const isFriend = friends.some(friend => friend.id === selectedUser.id)
-    const requestSent = sentRequests.some(request => request.receiver_id === selectedUser.id)
-    
     return (
       <div className="flex flex-1">
         <div className="common-container">
@@ -122,65 +81,17 @@ const AllUsers = () => {
             nomeUsuario={selectedUser.username} 
             artistaFav={selectedUser.favorite_artist || 'Não informado'} 
           />
-          
-          {isFriend ? (
-            <Button 
-              size="lg"
-              disabled
-              className="w-80 py-6 rounded-2xl bg-primary-500 text-light-1 opacity-50 cursor-not-allowed hover:bg-primary-500"
-            >
-              Vocês já são amigos
-            </Button>
-          ) : requestSent ? (
-            <Button 
-              size="lg"
-              disabled
-              className="w-80 py-6 rounded-2xl bg-dark-4 text-light-1 cursor-not-allowed hover:bg-dark-4"
-            >
-              Solicitação enviada
-            </Button>
-          ) : (
-            <Button 
-              size="lg"
-              onClick={() => handleSendRequest(selectedUser.id)}
-              disabled={buttonLoading}
-              className="w-80 py-6 rounded-2xl bg-primary-500 text-light-1 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
-            >
-              {buttonLoading ? (
-                <img src="../../assets/icons/loader.svg" alt="Carregando" className="w-5 h-5" />
-              ) : (
-                <>
-                  <svg 
-                    className="w-5 h-5 mr-2" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" 
-                    />
-                  </svg>
-                  Enviar solicitação de amizade
-                </>
-              )}
-            </Button>
-          )}
-          
         </div>
       </div>
     )
   }
 
-  //caso contrário, mostra a busca
+  // Caso contrário, mostra a busca
   return (
     <div className="flex flex-1 min-h-screen bg-exploreusers bg-fixed">
       <div className="common-container">
         <div className="user-container">
           <h2 className="h3-bold md:h2-bold text-left w-full">All Users</h2>
-          <h2 className="h3-bold md:h2-bold text-left w-full"> Friends </h2>
           
           <InputGroup className="w-full max-w-5xl bg-dark-4 rounded-xl border-2 border-transparent focus-within:border-white transition-colors">
             <InputGroupInput 
