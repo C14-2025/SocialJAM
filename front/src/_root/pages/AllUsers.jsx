@@ -1,7 +1,7 @@
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '@/components/ui/input-group'
 import { Button } from '@/components/ui/button'
 import React, { useState, useEffect } from 'react'
-import { searchUsers, sendFriendRequest, getSentFriendRequests, getFriends, getReceivedFriendRequests, respondToFriendRequest } from '@/api'
+import { searchUsers, sendFriendRequest, getSentFriendRequests, getFriends } from '@/api'
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom'
 import CardUser from '@/components/shared/CardUser'
@@ -12,7 +12,6 @@ const AllUsers = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
   const [sentRequests, setSentRequests] = useState([])
-  const [receivedRequests, setReceivedRequests] = useState([])
   const [friends, setFriends] = useState([])
   const [buttonLoading, setButtonLoading] = useState(false)
   const navigate = useNavigate()
@@ -42,40 +41,16 @@ const AllUsers = () => {
     setButtonLoading(false)
   }
 
-  const handleAcceptRequest = async (requestId) => {
-    setButtonLoading(true)
-    const result = await respondToFriendRequest(requestId, 'accepted')
-    
-    if (result.success) {
-      //remove da lista de recebidas e adiciona aos amigos
-      setReceivedRequests(prev => prev.filter(req => req.id !== requestId))
-      //recarrega amigos
-      const friendsResult = await getFriends()
-      if (friendsResult.success) {
-        setFriends(friendsResult.data)
-      }
-    } else {
-      alert(result.error)
-    }
-    
-    setButtonLoading(false)
-  }
-
   //busca solicitações enviadas e amigs ao carregar
   useEffect(() => {
     const fetchRequestsAndFriends = async () => {
-      const [sentResult, receivedResult, friendsResult] = await Promise.all([
+      const [requestsResult, friendsResult] = await Promise.all([
         getSentFriendRequests(),
-        getReceivedFriendRequests(),
         getFriends()
       ])
       
-      if (sentResult.success) {
-        setSentRequests(sentResult.data)
-      }
-      
-      if (receivedResult.success) {
-        setReceivedRequests(receivedResult.data)
+      if (requestsResult.success) {
+        setSentRequests(requestsResult.data)
       }
       
       if (friendsResult.success) {
@@ -127,7 +102,6 @@ const AllUsers = () => {
   if (username && selectedUser) {
     const isFriend = friends.some(friend => friend.id === selectedUser.id)
     const requestSent = sentRequests.some(request => request.receiver_id === selectedUser.id)
-    const requestReceived = receivedRequests.find(request => request.sender_id === selectedUser.id)
     
     return (
       <div className="flex flex-1">
@@ -155,48 +129,7 @@ const AllUsers = () => {
               disabled
               className="w-80 py-6 rounded-2xl bg-primary-500 text-light-1 opacity-50 cursor-not-allowed hover:bg-primary-500"
             >
-              <svg 
-                className="w-5 h-5 mr-2" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M5 13l4 4L19 7" 
-                />
-              </svg>
               Vocês já são amigos
-            </Button>
-          ) : requestReceived ? (
-            <Button 
-              size="lg"
-              onClick={() => handleAcceptRequest(requestReceived.id)}
-              disabled={buttonLoading}
-              className="w-80 py-6 rounded-2xl bg-green-600 hover:bg-green-700 text-white transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
-            >
-              {buttonLoading ? (
-                <img src="../../assets/icons/loader.svg" alt="Carregando" className="w-5 h-5" />
-              ) : (
-                <>
-                  <svg 
-                    className="w-5 h-5 mr-2" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" 
-                    />
-                  </svg>
-                  Aceitar pedido de amizade
-                </>
-              )}
             </Button>
           ) : requestSent ? (
             <Button 
@@ -204,19 +137,6 @@ const AllUsers = () => {
               disabled
               className="w-80 py-6 rounded-2xl bg-dark-4 text-light-1 cursor-not-allowed hover:bg-dark-4"
             >
-              <svg 
-                className="w-5 h-5 mr-2" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" 
-                />
-              </svg>
               Solicitação enviada
             </Button>
           ) : (
