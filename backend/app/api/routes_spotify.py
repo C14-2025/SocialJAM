@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from .. import database, oauth2
 from ..services.spotify_auth_service import SpotifyAuthService
 from ..repositories.spotify_artists_repository import sync_top_artists
+from ..repositories.artist import show_all_artists
 from ..repositories.user import update_spotify_tokens, get_user_spotify_tokens
 from datetime import datetime
 import json
@@ -142,7 +143,7 @@ async def get_top_artists(
         
         sync_top_artists(top_artists_data, db)
         
-        return top_artists_data
+        return show_all_artists(db)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
