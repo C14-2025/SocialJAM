@@ -18,6 +18,9 @@ const AllUsers = () => {
   const [currentUser, setCurrentUser] = useState(null)
   const navigate = useNavigate()
   const { username } = useParams()
+  const hasSearch = searchValue.trim().length > 0;
+  const hasResults = users.length > 0;
+
 
   const handleUserClick = (user) => {
     if (currentUser && user.username === currentUser.username) {
@@ -64,7 +67,6 @@ const AllUsers = () => {
     
     setButtonLoading(false)
   }
-
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -279,10 +281,10 @@ const AllUsers = () => {
 
   //caso contrário, mostra a busca
   return (
-    <div className="flex flex-1 min-h-screen bg-exploreusers bg-fixed">
+    <div className={`flex flex-1 min-h-screen bg-dark-1 bg-fixed ${hasSearch ? "" : "bg-exploreusers"}`}>
       <div className="common-container">
         <div className="user-container">
-          <h2 className="h3-bold md:h2-bold text-left w-full">Busque por usuários</h2>
+          <h2 className="h3-bold md:h2-bold text-left w-full ">Busque por usuários</h2>
           
           
           <InputGroup className="w-full max-w-5xl bg-dark-4 rounded-xl border-2 border-transparent focus-within:border-white transition-colors">
@@ -301,9 +303,6 @@ const AllUsers = () => {
           )}
 
           <div className="user-grid">
-            
-            
-
             {!isLoading && users.length > 0 && users.map((user, index) => (
               <div 
                 key={user.id || user.username} 
