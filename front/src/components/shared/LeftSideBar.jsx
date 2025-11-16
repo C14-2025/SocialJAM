@@ -34,7 +34,7 @@ const Leftsidebar = () => {
           />
         </Link>
 
-        {/* precisamos fazer a imagem e o nome serem dinâmicos de acordo com o usuário !!!!*/}
+        {/* mt bom fellas parabens*/}
         <Link to={"/profile"} className="flex gap-3 items-center">
           <img
             src={user?.user_photo_url ? `http://localhost:8000/${user?.user_photo_url}` : '/assets/icons/profile-placeholder.svg'}

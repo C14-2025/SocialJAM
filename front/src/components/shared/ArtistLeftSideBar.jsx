@@ -1,4 +1,3 @@
-import React from "react";
 import { useParams, NavLink, useLocation, Link } from "react-router-dom";
 import { artistFeedTabs } from "@/constants";
 import { Button } from "@/components/ui/button";
@@ -32,39 +31,42 @@ const ArtistLeftSideBar = () => {
             height={20}
           />
         </Link>
-
-        <Link to={"profile"} className="flex gap-3 items-center">
+        <Link to={"/profile"} className="flex gap-3 items-center">
           <img
-            src="/assets/icons/profile-placeholder.svg"
+            src={
+              user?.user_photo_url
+                ? `http://localhost:8000/${user?.user_photo_url}`
+                : "/assets/icons/profile-placeholder.svg"
+            }
             alt="profile"
             width={24}
             height={24}
-            className="h-14 w-14 rounded-full"
+            className={`h-14 w-14 rounded-full object-cover border-2 shadow-lg ${
+              user?.user_photo_url ? "border-primary-500" : "border-gray-600"
+            }`}
           />
 
           <div className="flex flex-col">
-            <p className="body-bold">{user?.nome || ""}</p>
+            <p className="body-bold">{user?.username || ""} </p>
           </div>
         </Link>
 
-
         <ul className="flex flex-col gap-6">
           {artistFeedTabs.map((link) => {
-            const fullRoute = link.route 
-              ? `/artist/${artistId}/${link.route}` 
+            const fullRoute = link.route
+              ? `/artist/${artistId}/${link.route}`
               : `/artist/${artistId}`;
-            
+
             const isActive = pathname === fullRoute;
-            
+
             return (
               <li
                 key={link.label}
-                className={`leftsidebar-link group ${isActive && "bg-primary-500"}`}
+                className={`leftsidebar-link group ${
+                  isActive && "bg-primary-500"
+                }`}
               >
-                <NavLink 
-                  to={fullRoute} 
-                  className="flex gap-4 items-center p-4"
-                >
+                <NavLink to={fullRoute} className="flex gap-4 items-center p-4">
                   <img
                     src={link.imgURL}
                     alt={link.label}
