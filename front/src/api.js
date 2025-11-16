@@ -220,6 +220,38 @@ export const getFriends = async () => {
     }
 };
 
+export const getReceivedFriendRequests = async () => {
+    try {
+        const response = await api.get('/friends/requests');
+        return {
+            success: true,
+            data: response.data
+        };
+    } catch (error) {
+        console.error('Erro ao buscar solicitações recebidas:', error);
+        return {
+            success: false,
+            error: error.response?.data?.detail || 'Erro ao buscar solicitações recebidas'
+        };
+    }
+};
+
+export const respondToFriendRequest = async (requestId, response) => {
+    try {
+        const result = await api.put(`/friends/request/${requestId}/${response}`);
+        return {
+            success: true,
+            data: result.data
+        };
+    } catch (error) {
+        console.error('Erro ao responder solicitação:', error);
+        return {
+            success: false,
+            error: error.response?.data?.detail || 'Erro ao responder solicitação'
+        };
+    }
+};
+
 
 
 export default api;
