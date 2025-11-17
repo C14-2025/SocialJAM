@@ -252,6 +252,22 @@ export const respondToFriendRequest = async (requestId, response) => {
     }
 };
 
+export const removeFriend = async (friendId) => {
+    try {
+        const result = await api.delete(`/friends/${friendId}`);
+        return {
+            success: true,
+            data: result.data
+        };
+    } catch (error) {
+        console.error('Erro ao remover amizade:', error);
+        return {
+            success: false,
+            error: error.response?.data?.detail || 'Erro ao remover amizade'
+        };
+    }
+};
+
 
 
 export default api;
