@@ -1,7 +1,8 @@
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '@/components/ui/input-group'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import React, { useState, useEffect } from 'react'
-import { searchUsers, sendFriendRequest, getSentFriendRequests, getFriends, getReceivedFriendRequests, respondToFriendRequest, getMe } from '@/api'
+import { searchUsers, sendFriendRequest, getSentFriendRequests, getFriends, getReceivedFriendRequests, respondToFriendRequest, getMe, removeFriend } from '@/api'
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom'
 import CardUser from '@/components/shared/CardUser'
@@ -16,6 +17,7 @@ const AllUsers = () => {
   const [friends, setFriends] = useState([])
   const [buttonLoading, setButtonLoading] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
+  const [showOnlyFriends, setShowOnlyFriends] = useState(false)
   const navigate = useNavigate()
   const { username } = useParams()
   const hasSearch = searchValue.trim().length > 0;
@@ -68,6 +70,35 @@ const AllUsers = () => {
     setButtonLoading(false)
   }
 
+  const handleDeclineRequest = async (requestId) => {
+    setButtonLoading(true)
+    const result = await respondToFriendRequest(requestId, 'denied')
+    
+    if (result.success) {
+      //remove da lista de recebidas
+      setReceivedRequests(prev => prev.filter(req => req.id !== requestId))
+    } else {
+      alert(result.error)
+    }
+    
+    setButtonLoading(false)
+  }
+
+  const handleRemoveFriend = async (friendId) => {
+    
+    setButtonLoading(true)
+    const result = await removeFriend(friendId)
+    
+    if (result.success) {
+      //remove da lista de amigos
+      setFriends(prev => prev.filter(friend => friend.id !== friendId))
+    } else {
+      alert(result.error)
+    }
+    
+    setButtonLoading(false)
+  }
+
   useEffect(() => {
     const fetchCurrentUser = async () => {
       const result = await getMe()
@@ -105,7 +136,7 @@ const AllUsers = () => {
 
   useEffect(() => {
     if (username && users.length > 0 && currentUser) {
-      // Impede acesso ao próprio perfil pela URL
+      //impede acesso ao próprio perfil pela URL
       if (username === currentUser.username) {
         navigate('/all-users')
         return
@@ -124,20 +155,31 @@ const AllUsers = () => {
     const fetchUsers = async () => {
       setIsLoading(true) 
       
-      const result = await searchUsers(searchValue) //aqui ele vai pegar o valor do searchValue lá de baixo
-
-      if(result.success){
-        console.log('Usuários encontrados:', result.users) 
-        const filteredUsers = currentUser 
-          ? result.users.filter(user => user.username !== currentUser.username)
-          : result.users
-        setUsers(filteredUsers) //se achar vai setar o user
+      if (showOnlyFriends) {
+        //filtra amigos pela busca
+        const filteredFriends = friends.filter(friend => 
+          friend.username?.toLowerCase().includes(searchValue.toLowerCase()) ||
+          friend.nome?.toLowerCase().includes(searchValue.toLowerCase()) ||
+          friend.favorite_artist?.toLowerCase().includes(searchValue.toLowerCase())
+        )
+        setUsers(filteredFriends)
+        setIsLoading(false)
       } else {
-        console.error('Erro:', result.error) //se der erro vai mandar um array vazio
-        setUsers([])
+        const result = await searchUsers(searchValue)
+
+        if(result.success){
+          console.log('Usuários encontrados:', result.users) 
+          const filteredUsers = currentUser 
+            ? result.users.filter(user => user.username !== currentUser.username)
+            : result.users
+          setUsers(filteredUsers)
+        } else {
+          console.error('Erro:', result.error)
+          setUsers([])
+        }
+        
+        setIsLoading(false)
       }
-      
-      setIsLoading(false)
     }
 
     
@@ -146,7 +188,7 @@ const AllUsers = () => {
     }, 500) 
 
     return () => clearTimeout(timeoutId)
-  }, [searchValue]) //executa sempre que searchValue mudar
+  }, [searchValue, showOnlyFriends, friends, currentUser])
 
   //se tiver username na url e usuário selecionado, mostra o perfil
   if (username && selectedUser) {
@@ -175,54 +217,100 @@ const AllUsers = () => {
           />
           
           {isFriend ? (
-            <Button 
-              size="lg"
-              disabled
-              className="w-80 py-6 rounded-2xl bg-primary-500 text-light-1 opacity-50 cursor-not-allowed hover:bg-primary-500"
-            >
-              <svg 
-                className="w-5 h-5 mr-2" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
+            <div className="flex flex-col gap-3 items-center justify-center w-full max-w-2xl mx-auto">
+              <Button 
+                size="lg"
+                disabled
+                className="w-80 py-6 rounded-2xl bg-primary-500 text-light-1 opacity-50 cursor-not-allowed hover:bg-primary-500"
               >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M5 13l4 4L19 7" 
-                />
-              </svg>
-              Vocês já são amigos
-            </Button>
+                <svg 
+                  className="w-5 h-5 mr-2" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M5 13l4 4L19 7" 
+                  />
+                </svg>
+                Vocês já são amigos
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => handleRemoveFriend(selectedUser.id)}
+                disabled={buttonLoading}
+                className="text-red-400 hover:text-red-300 hover:bg-red-950/20 transition-colors"
+              >
+                <svg 
+                  className="w-4 h-4 mr-2" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" 
+                  />
+                </svg>
+                Desfazer amizade
+              </Button>
+            </div>
           ) : requestReceived ? (
-            <Button 
-              size="lg"
-              onClick={() => handleAcceptRequest(requestReceived.id)}
-              disabled={buttonLoading}
-              className="w-80 py-6 rounded-2xl bg-green-600 hover:bg-green-700 text-white transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
-            >
-              {buttonLoading ? (
-                <img src="../../assets/icons/loader.svg" alt="Carregando" className="w-5 h-5" />
-              ) : (
-                <>
-                  <svg 
-                    className="w-5 h-5 mr-2" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" 
-                    />
-                  </svg>
-                  Aceitar pedido de amizade
-                </>
-              )}
-            </Button>
+            <div className="flex flex-col gap-3 items-center justify-center w-full max-w-2xl mx-auto">
+              <Button 
+                size="lg"
+                onClick={() => handleAcceptRequest(requestReceived.id)}
+                disabled={buttonLoading}
+                className="w-80 py-6 rounded-2xl bg-green-600 hover:bg-green-700 text-white transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+              >
+                {buttonLoading ? (
+                  <img src="../../assets/icons/loader.svg" alt="Carregando" className="w-5 h-5" />
+                ) : (
+                  <>
+                    <svg 
+                      className="w-5 h-5 mr-2" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" 
+                      />
+                    </svg>
+                    Aceitar pedido de amizade
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => handleDeclineRequest(requestReceived.id)}
+                disabled={buttonLoading}
+                className="text-red-400 hover:text-red-300 hover:bg-red-950/20 transition-colors"
+              >
+                <svg 
+                  className="w-4 h-4 mr-2" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M6 18L18 6M6 6l12 12" 
+                  />
+                </svg>
+                Recusar pedido
+              </Button>
+            </div>
           ) : requestSent ? (
             <Button 
               size="lg"
@@ -284,12 +372,21 @@ const AllUsers = () => {
     <div className={`flex flex-1 min-h-screen bg-dark-1 bg-fixed ${hasSearch ? "" : "bg-exploreusers"}`}>
       <div className="common-container">
         <div className="user-container">
-          <h2 className="h3-bold md:h2-bold text-left w-full ">Busque por usuários</h2>
-          
+          <div className="flex items-center justify-between w-full mb-6">
+            <h2 className="h3-bold md:h2-bold text-left">{showOnlyFriends ? 'Seus Amigos' : 'Busque por usuários'}</h2>
+            <div className="flex items-center gap-3">
+              <span className="text-light-2 small-medium">Mostrar apenas amigos</span>
+              <Switch 
+                checked={showOnlyFriends}
+                onCheckedChange={setShowOnlyFriends}
+                className="data-[state=checked]:bg-primary-500"
+              />
+            </div>
+          </div>
           
           <InputGroup className="w-full max-w-5xl bg-dark-4 rounded-xl border-2 border-transparent focus-within:border-white transition-colors">
             <InputGroupInput 
-              placeholder="Busque usuários" 
+              placeholder={showOnlyFriends ? "Busque amigos" : "Busque usuários"} 
               className="h-12 bg-transparent border-none placeholder:text-light-4 focus-visible:ring-0 focus-visible:ring-offset-0 text-light-1"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
