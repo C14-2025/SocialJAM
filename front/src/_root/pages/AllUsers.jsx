@@ -369,7 +369,7 @@ const AllUsers = () => {
 
   //caso contrário, mostra a busca
   return (
-    <div className={`flex flex-1 min-h-screen bg-dark-1 bg-fixed ${hasSearch ? "" : "bg-exploreusers"}`}>
+    <div className={`flex flex-1 min-h-screen bg-dark-1 bg-fixed ${hasSearch || showOnlyFriends ? "" : "bg-exploreusers"}`}>
       <div className="common-container">
         <div className="user-container">
           <div className="flex items-center justify-between w-full mb-6">
