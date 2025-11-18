@@ -29,7 +29,7 @@ class Album(base):
     __tablename__ = 'album'
     
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    artist_id = Column(Integer)
+    artist_id = Column(Integer, ForeignKey('artist.id'))
     artist_name = Column(String)
     artist_genre = Column(String)
     album_name = Column(String)
