@@ -29,9 +29,13 @@ class Album(base):
     __tablename__ = 'album'
     
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    nome = Column(String)
+    artist_id = Column(Integer)
+    artist_name = Column(String)
+    artist_genre = Column(String)
+    album_name = Column(String)
+    release_date = Column(DateTime)
+    album_cover_url = Column(String)
     total_tracks = Column(Integer)
-    artist_id = Column(Integer, ForeignKey('artist.id'))
     
     criador = relationship("Artist", back_populates="albums")
 
