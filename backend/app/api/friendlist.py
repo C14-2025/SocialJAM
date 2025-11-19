@@ -101,3 +101,11 @@ def mark_notification_as_read(
 ):
     #marca notificação como lida
     return friends.mark_notification_as_read(notification_id, current_user.id, db)
+
+@router.get('/history', status_code=status.HTTP_200_OK, response_model=List[schemas.FriendRequestHistoryOut])
+def get_friend_request_history(
+    db: Session = Depends(get_db), 
+    current_user = Depends(get_current_user)
+):
+    #busca histórico de solicitações de amizade do usuário
+    return friends.get_friend_request_history(current_user.id, db)
