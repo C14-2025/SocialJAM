@@ -4,6 +4,24 @@ from ..database import get_db
 from fastapi import Depends, status, HTTPException
 from typing import List
 
+def _log_friend_request_history(user1_id: int, user2_id: int, action: str, initiated_by: int, db: Session):
+    """Helper function to log friend request history"""
+    # Ensure consistent ordering for user1_id and user2_id (smaller id first)
+    if user1_id > user2_id:
+        user1_id, user2_id = user2_id, user1_id
+    
+    history_entry = models_sql.FriendRequestHistory(
+        user1_id=user1_id,
+        user2_id=user2_id,
+        action=action,
+        initiated_by=initiated_by
+    )
+    
+    db.add(history_entry)
+    db.commit()
+    db.refresh(history_entry)
+    return history_entry
+
 def send_friend_request(sender_id: int, receiver_id: int, db: Session = Depends(get_db)):
     #Envia uma solicitação de amizade
     #verificar se os usuários existem
@@ -18,15 +36,16 @@ def send_friend_request(sender_id: int, receiver_id: int, db: Session = Depends(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Você não pode enviar solicitação para si mesmo")
     
     #verificar se já existe uma solicitação pendente
-    existing_request = db.query(models_sql.FriendRequest).filter(
-        (models_sql.FriendRequest.sender_id == sender_id) & 
-        (models_sql.FriendRequest.receiver_id == receiver_id) |
-        (models_sql.FriendRequest.sender_id == receiver_id) & 
-        (models_sql.FriendRequest.receiver_id == sender_id)
+    existing_pending_request = db.query(models_sql.FriendRequest).filter(
+        ((models_sql.FriendRequest.sender_id == sender_id) & 
+         (models_sql.FriendRequest.receiver_id == receiver_id) |
+         (models_sql.FriendRequest.sender_id == receiver_id) & 
+         (models_sql.FriendRequest.receiver_id == sender_id)) &
+        (models_sql.FriendRequest.status == "Pending")
     ).first()
     
-    if existing_request:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Solicitação já existe")
+    if existing_pending_request:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Solicitação pendente já existe")
     
     #verificar se já são amigos
     existing_friendship = db.query(models_sql.Friendship).filter(
@@ -49,6 +68,9 @@ def send_friend_request(sender_id: int, receiver_id: int, db: Session = Depends(
     db.add(new_request)
     db.commit()
     db.refresh(new_request)
+    
+    # Log friend request history
+    _log_friend_request_history(sender_id, receiver_id, "sent", sender_id, db)
     
     #criar notificação para o receptor
     notification = models_sql.Notification(
@@ -81,6 +103,10 @@ def respond_to_friend_request(request_id: int, response: str, user_id: int, db: 
     #atualizar status da solicitação
     friend_request.status = response
     db.commit()
+    
+    # Log friend request history
+    action = "accepted" if response == "Accepted" else "denied"
+    _log_friend_request_history(friend_request.sender_id, friend_request.receiver_id, action, user_id, db)
     
     #se aceita, criar amizade
     if response == "Accepted":
@@ -166,6 +192,9 @@ def remove_friend(user_id: int, friend_id: int, db: Session = Depends(get_db)):
     if not friendship:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Amizade não encontrada")
     
+    # Log friend request history before removing friendship
+    _log_friend_request_history(user_id, friend_id, "friendship_removed", user_id, db)
+    
     db.delete(friendship)
     db.commit()
     
@@ -203,3 +232,12 @@ def search_users(query: str, current_user_id: int, db: Session = Depends(get_db)
     ).all()
     
     return users
+
+def get_friend_request_history(user_id: int, db: Session = Depends(get_db)):
+    """Get all friend request history for a user"""
+    history = db.query(models_sql.FriendRequestHistory).filter(
+        (models_sql.FriendRequestHistory.user1_id == user_id) |
+        (models_sql.FriendRequestHistory.user2_id == user_id)
+    ).order_by(models_sql.FriendRequestHistory.created_at.desc()).all()
+    
+    return history

@@ -94,3 +94,15 @@ class GetProfilePictureResponse(BaseModel):
     user_photo_url: str
     class Config:
         orm_mode = True
+
+
+class FriendRequestHistoryOut(BaseModel):
+    id: int
+    user1_id: int
+    user2_id: int
+    action: str
+    initiated_by: int
+    created_at: datetime
+
+    class Config:
+        orm_mode = True

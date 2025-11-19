@@ -50,10 +50,6 @@ class FriendRequest(base):
     status = Column(String, default="Pending") #Isso pode ser Pending, Accepted, Denied,
     created_at = Column(DateTime, default=datetime.now)
 
-    __table_args__ = (
-        UniqueConstraint("sender_id", "receiver_id", name="unique_friend_request"),
-    )
-
     sender = relationship("User", foreign_keys=[sender_id])
     receiver = relationship("User", foreign_keys=[receiver_id])
 
@@ -84,3 +80,18 @@ class Notification(base):
     created_at = Column(DateTime, default=datetime.now)
 
     user = relationship("User", foreign_keys=[user_id])
+
+
+class FriendRequestHistory(base):
+    __tablename__ = "friend_request_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user1_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    user2_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    action = Column(String, nullable=False)  # "sent", "accepted", "denied", "friendship_removed"
+    initiated_by = Column(Integer, ForeignKey("user.id"), nullable=False)  # who initiated this action
+    created_at = Column(DateTime, default=datetime.now)
+
+    user1 = relationship("User", foreign_keys=[user1_id])
+    user2 = relationship("User", foreign_keys=[user2_id])
+    initiator = relationship("User", foreign_keys=[initiated_by])
