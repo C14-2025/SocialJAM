@@ -12,6 +12,8 @@ RUN apt-get install -y python3
 RUN apt-get install -y python3-pip
 RUN apt-get install -y python3-venv
 
+#instalando o npm
+RUN sudo apt install nodejs npm -y
 
 # Da permissão para o usuário jenkins
 RUN chown -R jenkins:jenkins /usr/local
