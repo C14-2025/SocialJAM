@@ -27,7 +27,8 @@ class SpotifyAuthService:
             client_secret=self.client_secret,
             redirect_uri=self.redirect_uri,
             scope="user-top-read",
-            state=state
+            state=state,
+            cache_handler=None
         )
         auth_url = sp_oauth.get_authorize_url()
         return auth_url
@@ -37,7 +38,8 @@ class SpotifyAuthService:
             client_id=self.client_id,
             client_secret=self.client_secret,
             redirect_uri=self.redirect_uri,
-            scope="user-top-read"
+            scope="user-top-read",
+            cache_handler=None
         )
         token_info = sp_oauth.get_access_token(code)
         return {
