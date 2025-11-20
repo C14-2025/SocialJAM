@@ -13,7 +13,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { uploadProfilePicture } from '@/api';
+import { uploadProfilePicture, spotifyLogin, hasSpotifyConnected } from '@/api';
 
 const Profile = () => {
     const { user, isLoading, refreshUser } = useAuth();
@@ -21,11 +21,29 @@ const Profile = () => {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [isConnectingSpotify, setIsConnectingSpotify] = useState(false);
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
             setSelectedFile(file);
+        }
+    };
+
+    const handleSpotifyConnect = async () => {
+        setIsConnectingSpotify(true);
+        try {
+            const result = await spotifyLogin(window.location.pathname);
+            if (result.success && result.authUrl) {
+                // Redireciona para a página de autenticação do Spotify
+                window.location.href = result.authUrl;
+            } else {
+                alert('Erro ao conectar com Spotify: ' + result.error);
+                setIsConnectingSpotify(false);
+            }
+        } catch  {
+            alert('Erro ao conectar com Spotify');
+            setIsConnectingSpotify(false);
         }
     };
 
@@ -69,15 +87,38 @@ const Profile = () => {
         );
     }
 
+    const isSpotifyConnected = hasSpotifyConnected(user);
+
     return(
         <div className="flex flex-1 min-h-screen bg-user bg-fixed">
-            <CardUser 
-                image={user?.user_photo_url ? `http://localhost:8000/${user?.user_photo_url}` : null} 
-                nomeUsuario={user?.username} 
-                artistaFav={user?.favorite_artist || 'Não informado'}
-                showEditButton={true}
-                onEditClick={() => setIsDrawerOpen(true)}
-            />
+            <div className="common-container">
+                <CardUser 
+                    image={user?.user_photo_url ? `http://localhost:8000/${user?.user_photo_url}` : null} 
+                    nomeUsuario={user?.username} 
+                    artistaFav={user?.favorite_artist || 'Não informado'}
+                    showEditButton={true}
+                    onEditClick={() => setIsDrawerOpen(true)}
+                />
+                
+                <div className="mt-6 flex flex-col gap-4">
+                    <div className="bg-dark-3 rounded-xl p-4">
+                        <h3 className="h3-bold mb-2">Conexão Spotify</h3>
+                        <p className="text-light-3 text-sm mb-4">
+                            {isSpotifyConnected 
+                                ? '✅ Conectado ao Spotify' 
+                                : 'Conecte sua conta Spotify para importar seus artistas favoritos'}
+                        </p>
+                        <Button 
+                            onClick={handleSpotifyConnect}
+                            disabled={isConnectingSpotify}
+                            className="bg-green-600 hover:bg-green-700 w-full"
+                        >
+                            {isConnectingSpotify ? 'Conectando...' : 
+                             isSpotifyConnected ? '🔄 Reconectar ao Spotify' : '🎵 Conectar ao Spotify'}
+                        </Button>
+                    </div>
+                </div>
+            </div>
             
             <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
                 <DrawerContent className="max-w-md mx-auto">

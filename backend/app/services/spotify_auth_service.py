@@ -146,3 +146,23 @@ class SpotifyAuthService:
             "artist": artist.get("name"),
             "albums": cleaned_albums
         }
+
+    def search_artists(self, query: str, limit: int = 12):
+        token = self.get_app_access_token()
+
+        headers = {"Authorization": f"Bearer {token}"}
+        params = {
+            "q": query,
+            "type": "artist",
+            "limit": limit
+        }
+
+        response = requests.get(
+            "https://api.spotify.com/v1/search",
+            headers=headers,
+            params=params
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        return data.get("artists", {}).get("items", [])
