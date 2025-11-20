@@ -16,7 +16,8 @@ pipeline {
                     sh '''
                     node -v
                     npm -v
-                    npm install --legacy-peer-deps --no-audit --prefer-offline
+                    rm -rf node_modules package-lock.json
+                    npm install --legacy-peer-deps --no-audit
                     '''
                     }
             }
