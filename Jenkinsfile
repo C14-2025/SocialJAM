@@ -10,11 +10,13 @@ pipeline {
             }
         }
 
-        stage('Checando se instalou o npm'){
+        stage('Instalando as dependencias do front'){
             steps{
                 sh '''
                 node -v
                 npm -v
+                cd front
+                npm ci
                 '''
             }
         }
