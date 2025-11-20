@@ -16,7 +16,7 @@ pipeline {
                 node -v
                 npm -v
                 cd front
-                npm ci --prefer-offline --no-audit
+                npm install
                 '''
             }
         }
