@@ -12,12 +12,13 @@ pipeline {
 
         stage('Instalando as dependencias do front'){
             steps{
-                sh '''
-                node -v
-                npm -v
-                cd front
-                npm install
-                '''
+                dir('front') {
+                    sh '''
+                    node -v
+                    npm -v
+                    npm install --legacy-peer-deps --no-audit --prefer-offline
+                    '''
+                    }
             }
         }
     
