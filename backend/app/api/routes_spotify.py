@@ -26,7 +26,9 @@ async def spotify_login(
         }
         state_encoded = base64.urlsafe_b64encode(json.dumps(state_data).encode()).decode()
         auth_url = auth_service.get_auth_url(state=state_encoded)
-        return RedirectResponse(url=auth_url, status_code=302)
+        # Retornar a URL em JSON ao invés de fazer redirect
+        # Isso evita problemas de CORS com o frontend
+        return {"auth_url": auth_url}
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -80,8 +82,15 @@ async def spotify_callback(
             db=db
         )
         
-        # Redirecionar para a página de origem
-        frontend_url = redirect_url if redirect_url and redirect_url != "/" else "http://localhost:5173"
+        # Redirecionar para a página de origem no frontend
+        # Se redirect_url for relativo (/profile), construir URL completa
+        if redirect_url.startswith('http'):
+            frontend_url = redirect_url
+        else:
+            # Garantir que começa com /
+            path = redirect_url if redirect_url.startswith('/') else f'/{redirect_url}'
+            frontend_url = f"http://localhost:5173{path}"
+        
         return RedirectResponse(url=frontend_url, status_code=302)
     except HTTPException:
         raise
@@ -142,9 +151,23 @@ async def get_top_artists(
         
         top_artists_data = auth_service.get_top_artists(access_token, limit=50)
         
+        # Sincronizar artistas no banco (para manter histórico)
         sync_top_artists(top_artists_data, db)
         
-        return show_all_artists(db)
+        # Formatar dados do Spotify para o frontend
+        formatted_artists = []
+        if "items" in top_artists_data:
+            for artist in top_artists_data["items"]:
+                formatted_artists.append({
+                    "id": artist.get("id"),  # ID do Spotify
+                    "name": artist.get("name"),
+                    "followers": artist.get("followers", {}).get("total", 0),
+                    "genres": artist.get("genres", []),
+                    "popularity": artist.get("popularity", 0),
+                    "photo": artist.get("images", [{}])[0].get("url") if artist.get("images") else None
+                })
+        
+        return formatted_artists
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -172,4 +195,34 @@ async def get_all_albums(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao recuperar álbuns: {str(e)}"
+        )
+ 
+
+@router.get("/search-artists")
+async def search_spotify_artists(
+    query: str = Query(..., min_length=1, alias="q"),
+    current_user=Depends(oauth2.get_current_user)
+):
+    try:
+        auth_service = SpotifyAuthService()
+        artists = auth_service.search_artists(query=query)
+
+        formatted_artists = []
+        for artist in artists:
+            formatted_artists.append({
+                "id": artist.get("id"),
+                "name": artist.get("name"),
+                "followers": artist.get("followers", {}).get("total", 0),
+                "genres": artist.get("genres", []),
+                "popularity": artist.get("popularity", 0),
+                "photo": artist.get("images", [{}])[0].get("url") if artist.get("images") else None
+            })
+
+        return formatted_artists
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao buscar artistas no Spotify: {str(e)}"
         )
