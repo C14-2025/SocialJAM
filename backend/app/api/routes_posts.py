@@ -103,10 +103,25 @@ async def get_post(post_id: str, db = Depends(get_mongo_db_with_check)):
     return post
 
 @router.post('/{post_id}/like')
-async def like_post(post_id: str, current_user: dict, db = Depends(get_mongo_db_with_check)):
+async def like_post(
+    post_id: str, 
+    current_user = Depends(oauth2.get_current_user), 
+    db = Depends(get_mongo_db_with_check)
+):
     repo = PostsRepo(db)
+    user_cache_repo = UserCacheRepo(db)
+    
+    # Buscar o ObjectId do MongoDB usando o ID do SQL
     try:
-        await repo.like_post(post_id, current_user['id'])
+        mongo_user_id = await user_cache_repo.get_mongo_id_by_sql_id(current_user.id)
+    except UserCacheNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Usuário não encontrado no cache. Faça login novamente.'
+        )
+    
+    try:
+        liked = await repo.toggle_like_post(post_id, mongo_user_id)
     except InvalidId:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -117,7 +132,11 @@ async def like_post(post_id: str, current_user: dict, db = Depends(get_mongo_db_
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Post not found'
         )
-    return {'message': 'Post liked successfully'}
+    
+    return {
+        'message': 'Like toggled successfully',
+        'liked': liked
+    }
 
 @router.delete('/delete/{post_id}', status_code=204)
 async def delete_post(post_id: str, db = Depends(get_mongo_db_with_check)):

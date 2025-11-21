@@ -44,8 +44,32 @@ def get_all_users(db:Session = Depends(get_db), current_user=Depends(get_current
     return user.get_all_users(db)
 
 @router.get('/me', status_code=200, response_model=schemas.ShowUser)
-def get_current_user_info(current_user=Depends(get_current_user)):
-    return current_user
+async def get_current_user_info(
+    current_user=Depends(get_current_user),
+    mongo = Depends(get_mongo_db_with_check)
+):
+    from ..repositories.users_cache_repository import UserCacheRepo
+    
+    # Buscar mongo_id do usuário
+    cache_repo = UserCacheRepo(mongo)
+    try:
+        mongo_id = await cache_repo.get_mongo_id_by_sql_id(current_user.id)
+    except:
+        mongo_id = None
+    
+    # Criar resposta com mongo_id
+    user_dict = {
+        "id": current_user.id,
+        "username": current_user.username,
+        "nome": current_user.nome,
+        "email": current_user.email,
+        "user_photo_url": current_user.user_photo_url,
+        "favorite_artist": current_user.favorite_artist,
+        "spotify_user_token": current_user.spotify_user_token,
+        "mongo_id": mongo_id
+    }
+    
+    return user_dict
 
 @router.put('/me/favorite-artist', status_code=200, response_model=schemas.ShowUser)
 def set_favorite_artist(

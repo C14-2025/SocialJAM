@@ -454,4 +454,25 @@ export const disconnectSpotify = async () => {
   }
 };
 
+/**
+ * Toggle like em um post (adiciona ou remove like)
+ * Retorna se o post foi curtido (true) ou descurtido (false)
+ */
+export const toggleLikePost = async (postId) => {
+  try {
+    const response = await api.post(`/posts/${postId}/like`);
+    return {
+      success: true,
+      liked: response.data.liked,
+      message: response.data.message,
+    };
+  } catch (error) {
+    console.error("Erro ao dar like no post:", error);
+    return {
+      success: false,
+      error: error.response?.data?.detail || "Erro ao dar like no post",
+    };
+  }
+};
+
 export default api;
