@@ -34,14 +34,21 @@ class SpotifyAuthService:
         return auth_url
     
     def get_access_token(self, code: str):
-        sp_oauth = SpotifyOAuth(
-            client_id=self.client_id,
-            client_secret=self.client_secret,
-            redirect_uri=self.redirect_uri,
-            scope="user-top-read",
-            cache_handler=None
-        )
-        token_info = sp_oauth.get_access_token(code)
+        token_url = "https://accounts.spotify.com/api/token"
+        headers = {
+            "Authorization": "Basic " + base64.b64encode(f"{self.client_id}:{self.client_secret}".encode()).decode(),
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+        data = {
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": self.redirect_uri
+        }
+        
+        response = requests.post(token_url, headers=headers, data=data)
+        response.raise_for_status()
+        
+        token_info = response.json()
         return {
             "access_token": token_info.get("access_token"),
             "refresh_token": token_info.get("refresh_token"),
