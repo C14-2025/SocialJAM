@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { getSpotifyArtistById, getPostsByArtist } from "../../api";
+import { getSpotifyArtistById, getPostsByArtist, toggleLikePost } from "../../api";
+import { useAuth } from "../../context/AuthContext";
 
 const Home = () => {
   const { artistId } = useParams();
+  const { user } = useAuth();
   const [artist, setArtist] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +48,62 @@ const Home = () => {
 
     fetchArtistData();
   }, [artistId]);
+
+  const handleLike = async (postId) => {
+    if (!user) {
+      alert("Você precisa estar logado para curtir posts!");
+      return;
+    }
+
+    try {
+      const result = await toggleLikePost(postId);
+      
+      if (result.success) {
+        // Atualizar o estado local dos posts
+        setPosts(prevPosts => 
+          prevPosts.map(post => {
+            if (post._id === postId || post.id === postId) {
+              const userIdStr = user.mongo_id || user.id?.toString();
+              const isLiked = result.liked;
+              
+              let newLikedBy = [...(post.liked_by || [])];
+              let newLikes = post.likes || 0;
+              
+              if (isLiked) {
+                // Adicionar like
+                if (!newLikedBy.includes(userIdStr)) {
+                  newLikedBy.push(userIdStr);
+                  newLikes += 1;
+                }
+              } else {
+                // Remover like
+                newLikedBy = newLikedBy.filter(id => id !== userIdStr);
+                newLikes = Math.max(0, newLikes - 1);
+              }
+              
+              return {
+                ...post,
+                liked_by: newLikedBy,
+                likes: newLikes
+              };
+            }
+            return post;
+          })
+        );
+      } else {
+        alert("Erro ao curtir post: " + result.error);
+      }
+    } catch (error) {
+      console.error("Erro ao curtir post:", error);
+      alert("Erro ao curtir post");
+    }
+  };
+
+  const isPostLikedByUser = (post) => {
+    if (!user || !post.liked_by) return false;
+    const userIdStr = user.mongo_id || user.id?.toString();
+    return post.liked_by.includes(userIdStr);
+  };
 
   if (loading) {
     return (
@@ -162,7 +220,7 @@ const Home = () => {
                     </div>
                   </div>
 
-                  <p className="base-regular text-light-2 mb-5">
+                  <p className="base-regular text-light-2 mb-5 break-words whitespace-pre-wrap">
                     {post.content}
                   </p>
 
@@ -189,17 +247,22 @@ const Home = () => {
                   )}
 
                   <div className="flex items-center gap-6 text-light-3">
-                    <button className="flex items-center gap-2 hover:text-primary-500 transition">
+                    <button 
+                      onClick={() => handleLike(post._id || post.id)}
+                      className="flex items-center gap-2 hover:text-red-500 transition"
+                    >
                       <img
                         src={
-                          post.liked_by && post.liked_by.length > 0
+                          isPostLikedByUser(post)
                             ? "/assets/icons/liked.svg"
                             : "/assets/icons/like.svg"
                         }
                         alt="Curtir"
                         className="w-5 h-5"
                       />
-                      <span className="small-medium">{post.likes || 0}</span>
+                      <span className={`small-medium ${isPostLikedByUser(post) ? 'text-red-500' : ''}`}>
+                        {post.likes || 0}
+                      </span>
                     </button>
                     <button className="flex items-center gap-2 hover:text-primary-500 transition">
                       <img

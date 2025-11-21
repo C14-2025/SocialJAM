@@ -38,6 +38,43 @@ class PostsRepo:
 
         if result.modified_count < 1:
             raise PostNotFoundError(post_id)
+    
+    async def toggle_like_post(self, post_id: str, user_id: str):
+        """
+        Toggle like em um post: adiciona se não existir, remove se existir.
+        Retorna True se curtiu, False se descurtiu.
+        """
+        # Primeiro, verificar se o post existe e se o usuário já curtiu
+        post = await self.db['Posts'].find_one({'_id': ObjectId(post_id)})
+        if not post:
+            raise PostNotFoundError(post_id)
+        
+        user_obj_id = ObjectId(user_id)
+        liked_by = post.get('liked_by', [])
+        
+        # Verificar se o usuário já curtiu
+        already_liked = user_obj_id in liked_by
+        
+        if already_liked:
+            # Remover like
+            result = await self.db['Posts'].update_one(
+                {'_id': ObjectId(post_id)},
+                {
+                    '$pull': {'liked_by': user_obj_id},
+                    '$inc': {'likes': -1}
+                }
+            )
+            return False  # Descurtiu
+        else:
+            # Adicionar like
+            result = await self.db['Posts'].update_one(
+                {'_id': ObjectId(post_id)},
+                {
+                    '$addToSet': {'liked_by': user_obj_id},
+                    '$inc': {'likes': 1}
+                }
+            )
+            return True  # Curtiu
 
     async def get_post_list(self, pagination: int = 20):
         """Busca lista de posts com informações do autor"""
