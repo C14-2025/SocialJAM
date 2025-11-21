@@ -74,7 +74,7 @@ async def test_create_post():
 
     repo = PostsRepo(mock_db)
 
-    post = PostCreate(author_id='68c70db5e711056c7db5e35c', content='Test123')
+    post = PostCreate(author_id='68c70db5e711056c7db5e35c', content='Test123', artist_id='artist123')
 
     assert await repo.create_post(post) == inserted_id
 
@@ -89,7 +89,7 @@ async def test_creat_post_invalid_id():
 
     repo = PostsRepo(mock_db)
 
-    post = PostCreate(author_id='123', content='Test123')
+    post = PostCreate(author_id='123', content='Test123', artist_id='artist123')
     with pytest.raises(InvalidId):
         await repo.create_post(post)
 
