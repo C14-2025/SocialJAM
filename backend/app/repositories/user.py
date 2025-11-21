@@ -16,7 +16,7 @@ def get_user(username: str, db: Session = Depends(get_db)):
     user = db.query(models_sql.User).filter(models_sql.User.username == username).first()
     return user
 
-def create_user(request_user: schemas.User, db: Session = Depends(get_db), mongo = Depends(get_mongo_db_with_check)):
+async def create_user(request_user: schemas.User, db: Session = Depends(get_db), mongo = Depends(get_mongo_db_with_check)):
     # mongoDB cache instance
     cache = UserCacheRepo(mongo)
     usernameaux = request_user.username
@@ -32,9 +32,10 @@ def create_user(request_user: schemas.User, db: Session = Depends(get_db), mongo
     db.commit()
     db.refresh(new_user)
     # update the users cache on mongoDB
-    cache.upsert_user_cache(
+    await cache.upsert_user_cache(
         user=UserCache(
-            _id = new_user.id,
+            id="",  # Será gerado pelo MongoDB
+            sql_user_id=new_user.id,
             name=new_user.nome,
             user_photo_url=new_user.user_photo_url,
             updated_at=datetime.now()
@@ -50,7 +51,7 @@ def delete_user(username: str, db: Session = Depends(get_db)):
     db.commit()
     return f"{username} deletado"
 
-def update_user(username: str, request: schemas.User, db: Session = Depends(get_db), mongo = Depends(get_mongo_db_with_check)):
+async def update_user(username: str, request: schemas.User, db: Session = Depends(get_db), mongo = Depends(get_mongo_db_with_check)):
     # mongoDB cache instance
     cache = UserCacheRepo(mongo)
     user = db.query(models_sql.User).filter(models_sql.User.username == username)
@@ -68,9 +69,10 @@ def update_user(username: str, request: schemas.User, db: Session = Depends(get_
     # Get the updated user to refresh the cache
     updated_user = user.first()
     # update the users cache on mongoDB
-    cache.upsert_user_cache(
+    await cache.upsert_user_cache(
         user=UserCache(
-            _id = updated_user.id,
+            id="",  # Será mantido o existente ou gerado novo
+            sql_user_id=updated_user.id,
             name=updated_user.nome,
             user_photo_url=updated_user.user_photo_url,
             updated_at=datetime.now()

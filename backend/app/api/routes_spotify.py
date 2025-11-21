@@ -10,6 +10,7 @@ from ..repositories.spotify_albums_repository import get_all_albums_from_artists
 from datetime import datetime
 import json
 import base64
+import requests
 
 router = APIRouter(prefix="/spotify", tags=["spotify"])
 
@@ -232,25 +233,26 @@ async def get_artist_by_id(
     artist_id: str,
     current_user=Depends(oauth2.get_current_user)
 ):
+    """Busca informações de um artista específico pelo ID do Spotify"""
     try:
         auth_service = SpotifyAuthService()
         token = auth_service.get_app_access_token()
-
+        
         headers = {"Authorization": f"Bearer {token}"}
         response = requests.get(
-            f"https://api.spotify.com/v1/artists/%7Bartist_id%7D",
+            f"https://api.spotify.com/v1/artists/{artist_id}",
             headers=headers
         )
-
+        
         if response.status_code == 404:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Artista não encontrado no Spotify"
             )
-
+        
         response.raise_for_status()
         artist = response.json()
-
+        
         return {
             "id": artist.get("id"),
             "name": artist.get("name"),

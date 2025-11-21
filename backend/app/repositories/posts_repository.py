@@ -10,7 +10,8 @@ class PostsRepo:
 
     async def create_post(self, post: PostCreate):
         post_data = {
-            'author_id': ObjectId(post.author_id),
+            'author_id': ObjectId(post.author_id),  # Converte string do MongoDB ObjectId para ObjectId
+            'artist_id': post.artist_id,  # ID do Spotify (string)
             'content': post.content,
             'artist_id': post.artist_id,
             'images': post.images,
@@ -39,15 +40,51 @@ class PostsRepo:
             raise PostNotFoundError(post_id)
 
     async def get_post_list(self, pagination: int = 20):
-        # get a list of posts sorted by created_at with a pagination limit
-        posts = await self.db['Posts'].find().sort('created_at', -1).limit(pagination).to_list(length=pagination)
+        """Busca lista de posts com informações do autor"""
+        pipeline = [
+            {'$sort': {'created_at': -1}},
+            {'$limit': pagination},
+            {
+                '$lookup': {
+                    'from': 'Users_cache',
+                    'localField': 'author_id',
+                    'foreignField': '_id',
+                    'as': 'author_info'
+                }
+            },
+            {
+                '$unwind': {
+                    'path': '$author_info',
+                    'preserveNullAndEmptyArrays': True
+                }
+            }
+        ]
+        
+        posts = await self.db['Posts'].aggregate(pipeline).to_list(length=pagination)
+        
         for post in posts:
             post['_id'] = str(post['_id'])
             post['author_id'] = str(post['author_id'])
+            
+            # Adicionar informações do autor
+            if 'author_info' in post and post['author_info']:
+                post['author'] = {
+                    'name': post['author_info'].get('name', 'Usuário'),
+                    'user_photo_url': post['author_info'].get('user_photo_url', None)
+                }
+                del post['author_info']
+            else:
+                post['author'] = {
+                    'name': 'Usuário',
+                    'user_photo_url': None
+                }
+            
+            # Converter liked_by para strings
             users = []
-            for user in post['liked_by']:
+            for user in post.get('liked_by', []):
                 users.append(str(user))
             post['liked_by'] = users
+            
         return posts
     
     async def delete_post(self, post_id: str):
@@ -56,6 +93,61 @@ class PostsRepo:
             raise PostNotFoundError(post_id)
         
         return result.deleted_count
+    
+    async def get_posts_by_artist(self, artist_id: str, pagination: int = 20):
+        """Busca posts de um artista específico pelo ID do Spotify com informações do autor"""
+        pipeline = [
+            {'$match': {'artist_id': artist_id}},
+            {'$sort': {'created_at': -1}},
+            {'$limit': pagination},
+            {
+                '$lookup': {
+                    'from': 'Users_cache',
+                    'localField': 'author_id',
+                    'foreignField': '_id',
+                    'as': 'author_info'
+                }
+            },
+            {
+                '$unwind': {
+                    'path': '$author_info',
+                    'preserveNullAndEmptyArrays': True
+                }
+            }
+        ]
+        
+        posts = await self.db['Posts'].aggregate(pipeline).to_list(length=pagination)
+        
+        print(f"DEBUG: Encontrados {len(posts)} posts para o artista {artist_id}")
+        
+        for post in posts:
+            print(f"DEBUG: Post {post.get('_id')} - author_info: {post.get('author_info', 'NONE')}")
+            
+            post['_id'] = str(post['_id'])
+            post['author_id'] = str(post['author_id'])
+            
+            # Adicionar informações do autor
+            if 'author_info' in post and post['author_info']:
+                post['author'] = {
+                    'name': post['author_info'].get('name', 'Usuário'),
+                    'user_photo_url': post['author_info'].get('user_photo_url', None)
+                }
+                del post['author_info']
+                print(f"DEBUG: Autor populado: {post['author']}")
+            else:
+                post['author'] = {
+                    'name': 'Usuário',
+                    'user_photo_url': None
+                }
+                print(f"DEBUG: Sem author_info, usando padrão")
+            
+            # Converter liked_by para strings
+            users = []
+            for user in post.get('liked_by', []):
+                users.append(str(user))
+            post['liked_by'] = users
+            
+        return posts
     
 class PostNotFoundError(Exception):
     # Trhows this error when a post cant be found on the data base

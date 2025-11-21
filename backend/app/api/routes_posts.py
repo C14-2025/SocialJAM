@@ -1,9 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
 from app.models.mongo_posts import PostCreate, PostDB, CommentCreate, CommentDB
 from app.core.mongo import get_mongo_db_with_check
 from app.repositories.posts_repository import PostsRepo, PostNotFoundError
 from app.repositories.comments_repository import CommentsRepo, CommentNotFoundError
+from app.repositories.users_cache_repository import UserCacheRepo, UserCacheNotFoundError
+from app import oauth2
 from bson.errors import InvalidId
+import os
+import uuid
+from typing import Optional, List
 
 router = APIRouter(prefix='/posts', tags=['Posts'])
 
@@ -13,18 +18,71 @@ async def get_last_posts(pagination: int = 20, db = Depends(get_mongo_db_with_ch
     posts = await repo.get_post_list(pagination)
     return posts
 
+@router.get('/artist/{artist_id}', response_model=list[PostDB])
+async def get_posts_by_artist(artist_id: str, pagination: int = 20, db = Depends(get_mongo_db_with_check)):
+    """Busca todos os posts de um artista específico"""
+    repo = PostsRepo(db)
+    posts = await repo.get_posts_by_artist(artist_id, pagination)
+    return posts
+
 
 @router.post('/create')
-async def create_post(post: PostCreate, db = Depends(get_mongo_db_with_check)):
+async def create_post(
+    artist_id: str = Form(...),
+    content: str = Form(...),
+    images: Optional[List[UploadFile]] = File(None),
+    current_user = Depends(oauth2.get_current_user),
+    db = Depends(get_mongo_db_with_check)
+):
     repo = PostsRepo(db)
+    user_cache_repo = UserCacheRepo(db)
+    
+    # Buscar o ObjectId do MongoDB usando o ID do SQL
     try:
-        created = await repo.create_post(post)
+        mongo_user_id = await user_cache_repo.get_mongo_id_by_sql_id(current_user.id)
+    except UserCacheNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail='Usuário não encontrado no cache. Faça login novamente.'
+        )
+    
+    # Processar upload de imagens
+    image_paths = []
+    if images:
+        # Criar diretório se não existir
+        upload_dir = "images/posts"
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        for image in images:
+            if image:
+                # Gerar nome único para o arquivo
+                file_extension = os.path.splitext(image.filename)[1]
+                unique_filename = f"{uuid.uuid4()}{file_extension}"
+                file_path = os.path.join(upload_dir, unique_filename)
+                
+                # Salvar arquivo
+                with open(file_path, "wb") as buffer:
+                    content_file = await image.read()
+                    buffer.write(content_file)
+                
+                image_paths.append(file_path)
+    
+    # Criar post
+    post_data = PostCreate(
+        author_id=mongo_user_id,
+        artist_id=artist_id,
+        content=content,
+        images=image_paths
+    )
+    
+    try:
+        created = await repo.create_post(post_data)
     except InvalidId:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Invalid ID format'
         )
-    return created
+    return {"post_id": created, "message": "Post criado com sucesso!"}
 
 @router.get('/{post_id}', response_model=PostDB)
 async def get_post(post_id: str, db = Depends(get_mongo_db_with_check)):
