@@ -12,6 +12,7 @@ class PostsRepo:
         post_data = {
             'author_id': ObjectId(post.author_id),
             'content': post.content,
+            'artist_id': post.artist_id,
             'images': post.images,
             'likes': 0,
             'liked_by': [],

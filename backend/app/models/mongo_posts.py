@@ -5,6 +5,7 @@ from datetime import datetime
 class PostCreate(BaseModel):
     author_id: str 
     content: str
+    artist_id: str
     images: Optional[List[str]] = []
 
 class PostDB(PostCreate):
