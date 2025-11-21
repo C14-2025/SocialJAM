@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, status, Response, HTTPException, File, U
 from .. import schemas
 from sqlalchemy.orm import Session
 from ..database import get_db
+from ..core.mongo import get_mongo_db_with_check
 from typing import List, Annotated
 from ..repositories import user
 from ..oauth2 import get_current_user
@@ -17,8 +18,8 @@ router = APIRouter(
 
 
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=schemas.ShowUser)
-def createUser(request_user:schemas.User, db:Session = Depends(get_db)):
-    return user.create_user(request_user, db)
+async def createUser(request_user:schemas.User, db:Session = Depends(get_db), mongo = Depends(get_mongo_db_with_check)):
+    return await user.create_user(request_user, db, mongo)
 
 @router.delete('/{username}/delete', status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(username, db:Session=Depends(get_db), current_user=Depends(get_current_user)):
@@ -30,13 +31,13 @@ def delete_user(username, db:Session=Depends(get_db), current_user=Depends(get_c
     return user.delete_user(username, db)
 
 @router.put('/{username}/update', status_code=status.HTTP_202_ACCEPTED)
-def update_user(username, request:schemas.User, db:Session=Depends(get_db), current_user=Depends(get_current_user)):
+async def update_user(username, request:schemas.User, db:Session=Depends(get_db), mongo = Depends(get_mongo_db_with_check), current_user=Depends(get_current_user)):
     if current_user.username != username:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Você só pode atualizar sua própria conta, animal"
         )
-    return user.update_user(username, request, db)
+    return await user.update_user(username, request, db, mongo)
 
 @router.get('/', response_model=List[schemas.ShowUser])
 def get_all_users(db:Session = Depends(get_db), current_user=Depends(get_current_user)):
