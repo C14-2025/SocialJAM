@@ -6,6 +6,7 @@ class PostCreate(BaseModel):
     author_id: str 
     artist_id: str  # ID do artista do Spotify
     content: str
+    artist_id: str
     images: Optional[List[str]] = []
 
 class AuthorInfo(BaseModel):

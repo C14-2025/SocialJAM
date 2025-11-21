@@ -13,6 +13,7 @@ class PostsRepo:
             'author_id': ObjectId(post.author_id),  # Converte string do MongoDB ObjectId para ObjectId
             'artist_id': post.artist_id,  # ID do Spotify (string)
             'content': post.content,
+            'artist_id': post.artist_id,
             'images': post.images,
             'likes': 0,
             'liked_by': [],
