@@ -89,6 +89,7 @@ models.base.metadata.create_all(engine)
 
 # Servir arquivos estáticos (imagens)
 app.mount("/images", StaticFiles(directory="images"), name="images")
+app.mount("/backend/images", StaticFiles(directory="images"), name="backend_images")
 
 app.include_router(user_router)
 app.include_router(artist_router)
