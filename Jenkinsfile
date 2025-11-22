@@ -35,9 +35,7 @@ pipeline {
                     pip3 install uv
                     uv sync
                 """
-                echo "Abrindo Venv dependencias"
-                sh ". .venv/bin/activate"
-                echo "Ativado"
+                echo "Uv Instalado"
                 }
             }
         }
