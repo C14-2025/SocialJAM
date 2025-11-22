@@ -1,103 +1,109 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { getSpotifyArtistById, getPostsByArtist, toggleLikePost } from "../../api";
+import { useAuth } from "../../context/AuthContext";
 
 const Home = () => {
   const { artistId } = useParams();
+  const { user } = useAuth();
   const [artist, setArtist] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchArtistData = async () => {
       setLoading(true);
+      setError(null);
 
-      // simula dados
-      const artistsData = {
-        1: {
-          id: "1",
-          name: "Milton Nascimento",
-          followers: 1500000,
-          genres: ["MPB", "Jazz", "Bossa Nova"],
-          popularity: 85,
-          photo: "/assets/icons/profile-placeholder.svg",
-          bio: "Cantor e compositor brasileiro, um dos maiores nomes da MPB. Sua voz única e suas composições marcaram gerações.",
-        },
-        2: {
-          id: "2",
-          name: "Geordie Greep",
-          followers: 250000,
-          genres: ["Math Rock", "Progressive Rock", "Experimental"],
-          popularity: 68,
-          photo: "/assets/icons/profile-placeholder.svg",
-          bio: "Random que tocava umas musicas ai",
-        },
-        3: {
-          id: "3",
-          name: "Fiona apple",
-          followers: 2100000,
-          genres: ["MPB", "Samba", "Bossa Nova"],
-          popularity: 82,
-          photo: "/assets/icons/profile-placeholder.svg",
-          bio: "Random 2 que tocava umas musicas ai",
-        },
-        4: {
-          id: "4",
-          name: "King Crimson",
-          followers: 1800000,
-          genres: ["Progressive Rock", "Art Rock"],
-          popularity: 70,
-          photo: "/assets/icons/profile-placeholder.svg",
-          bio: "Uma das bandas mais influentes do rock progressivo, conhecida por suas composições complexas e experimentais.",
-        },
-      };
+      try {
+        // Buscar dados do artista da API do Spotify
+        const artistResult = await getSpotifyArtistById(artistId);
 
-      const mockPosts = [
-        {
-          id: 1,
-          author: "João Silva",
-          authorPhoto: "/assets/icons/profile-placeholder.svg",
-          content:
-            'Acabei de ouvir "Clube da Esquina" e estou sem palavras! 🎵 Uma obra-prima atemporal.',
-          likes: 45,
-          comments: 12,
-          createdAt: "2h atrás",
-          liked: false,
-        },
-        {
-          id: 2,
-          author: "Maria Santos",
-          authorPhoto: "/assets/icons/profile-placeholder.svg",
-          content:
-            'A voz desse artista é simplesmente celestial. "Travessia" é minha música favorita!',
-          likes: 78,
-          comments: 23,
-          createdAt: "5h atrás",
-          liked: true,
-        },
-        {
-          id: 3,
-          author: "Pedro Costa",
-          authorPhoto: "/assets/icons/profile-placeholder.svg",
-          content:
-            "Fui no show ontem e foi incrível! A energia é contagiante! 🔥",
-          likes: 120,
-          comments: 34,
-          createdAt: "1 dia atrás",
-          liked: false,
-        },
-      ];
+        if (artistResult.success) {
+          setArtist(artistResult.artist);
+        } else {
+          setError(artistResult.error);
+          setArtist(null);
+        }
 
-      setArtist(artistsData[artistId] || null);
-      setPosts(mockPosts);
-      setLoading(false);
-
-      // api real, descomentar
-      // const artistData = await getArtistById(artistId);
-      // const artistPosts = await getPostsByArtist(artistId);
+        // Buscar posts do artista
+        const postsResult = await getPostsByArtist(artistId);
+        if (postsResult.success) {
+          console.log("Posts recebidos:", postsResult.posts);
+          console.log("Primeiro post:", postsResult.posts[0]);
+          setPosts(postsResult.posts);
+        } else {
+          console.error("Erro ao buscar posts:", postsResult.error);
+          setPosts([]);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar dados do artista:", err);
+        setError("Erro ao carregar dados do artista");
+        setArtist(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchArtistData();
   }, [artistId]);
+
+  const handleLike = async (postId) => {
+    if (!user) {
+      alert("Você precisa estar logado para curtir posts!");
+      return;
+    }
+
+    try {
+      const result = await toggleLikePost(postId);
+      
+      if (result.success) {
+        // Atualizar o estado local dos posts
+        setPosts(prevPosts => 
+          prevPosts.map(post => {
+            if (post._id === postId || post.id === postId) {
+              const userIdStr = user.mongo_id || user.id?.toString();
+              const isLiked = result.liked;
+              
+              let newLikedBy = [...(post.liked_by || [])];
+              let newLikes = post.likes || 0;
+              
+              if (isLiked) {
+                // Adicionar like
+                if (!newLikedBy.includes(userIdStr)) {
+                  newLikedBy.push(userIdStr);
+                  newLikes += 1;
+                }
+              } else {
+                // Remover like
+                newLikedBy = newLikedBy.filter(id => id !== userIdStr);
+                newLikes = Math.max(0, newLikes - 1);
+              }
+              
+              return {
+                ...post,
+                liked_by: newLikedBy,
+                likes: newLikes
+              };
+            }
+            return post;
+          })
+        );
+      } else {
+        alert("Erro ao curtir post: " + result.error);
+      }
+    } catch (error) {
+      console.error("Erro ao curtir post:", error);
+      alert("Erro ao curtir post");
+    }
+  };
+
+  const isPostLikedByUser = (post) => {
+    if (!user || !post.liked_by) return false;
+    const userIdStr = user.mongo_id || user.id?.toString();
+    return post.liked_by.includes(userIdStr);
+  };
 
   if (loading) {
     return (
@@ -119,7 +125,7 @@ const Home = () => {
             alt="Not found"
             className="w-20 h-20 opacity-50"
           />
-          <p className="text-light-3">Artista não encontrado</p>
+          <p className="text-light-3">{error || "Artista não encontrado"}</p>
         </div>
       </div>
     );
@@ -133,7 +139,7 @@ const Home = () => {
           <div className="bg-dark-2 rounded-3xl border border-dark-4 p-6 mb-8">
             <div className="flex items-start gap-6">
               <img
-                src={artist.photo}
+                src={artist.photo || "/assets/icons/profile-placeholder.svg"}
                 alt={artist.name}
                 className="w-32 h-32 rounded-full object-cover border-4 border-primary-500 shadow-lg"
               />
@@ -154,7 +160,22 @@ const Home = () => {
                     ))}
                   </div>
                 )}
-                <p className="base-regular text-light-2">{artist.bio}</p>
+                {artist.popularity !== undefined && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-light-3 small-regular">
+                      Popularidade:
+                    </span>
+                    <div className="flex-1 max-w-xs bg-dark-4 rounded-full h-2">
+                      <div
+                        className="bg-primary-500 h-2 rounded-full"
+                        style={{ width: `${artist.popularity}%` }}
+                      />
+                    </div>
+                    <span className="text-light-2 small-medium">
+                      {artist.popularity}%
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -174,41 +195,74 @@ const Home = () => {
               </div>
             ) : (
               posts.map((post) => (
-                <div key={post.id} className="post-card">
+                <div key={post._id || post.id} className="post-card">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <img
-                        src={post.authorPhoto}
-                        alt={post.author}
-                        className="w-10 h-10 rounded-full"
+                        src={
+                          post.author?.user_photo_url
+                            ? `http://localhost:8000/${post.author.user_photo_url}`
+                            : "/assets/icons/profile-placeholder.svg"
+                        }
+                        alt={post.author?.name || "User"}
+                        className="w-10 h-10 rounded-full object-cover"
                       />
                       <div>
                         <p className="base-medium text-light-1">
-                          {post.author}
+                          {post.author?.name}
                         </p>
                         <p className="tiny-medium text-light-3">
-                          {post.createdAt}
+                          {new Date(post.created_at).toLocaleDateString(
+                            "pt-BR"
+                          )}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <p className="base-regular text-light-2 mb-5">
+                  <p className="base-regular text-light-2 mb-5 break-words whitespace-pre-wrap">
                     {post.content}
                   </p>
 
+                  {/* Mostrar imagens se existirem */}
+                  {post.images && post.images.length > 0 && (
+                    <div
+                      className={`grid gap-2 mb-5 ${
+                        post.images.length === 1
+                          ? "grid-cols-1"
+                          : post.images.length === 2
+                          ? "grid-cols-2"
+                          : "grid-cols-2"
+                      }`}
+                    >
+                      {post.images.map((image, index) => (
+                        <img
+                          key={index}
+                          src={`http://localhost:8000/${image}`}
+                          alt={`Post image ${index + 1}`}
+                          className="w-full h-auto rounded-xl object-cover max-h-96"
+                        />
+                      ))}
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-6 text-light-3">
-                    <button className="flex items-center gap-2 hover:text-primary-500 transition">
+                    <button 
+                      onClick={() => handleLike(post._id || post.id)}
+                      className="flex items-center gap-2 hover:text-red-500 transition"
+                    >
                       <img
                         src={
-                          post.liked
+                          isPostLikedByUser(post)
                             ? "/assets/icons/liked.svg"
                             : "/assets/icons/like.svg"
                         }
                         alt="Curtir"
                         className="w-5 h-5"
                       />
-                      <span className="small-medium">{post.likes}</span>
+                      <span className={`small-medium ${isPostLikedByUser(post) ? 'text-red-500' : ''}`}>
+                        {post.likes || 0}
+                      </span>
                     </button>
                     <button className="flex items-center gap-2 hover:text-primary-500 transition">
                       <img
@@ -216,7 +270,7 @@ const Home = () => {
                         alt="Comentar"
                         className="w-5 h-5"
                       />
-                      <span className="small-medium">{post.comments}</span>
+                      <span className="small-medium">0</span>
                     </button>
                     <button className="flex items-center gap-2 hover:text-primary-500 transition ml-auto">
                       <img

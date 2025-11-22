@@ -15,6 +15,8 @@ class ShowUser(BaseModel):
     email: str
     user_photo_url: Optional[str] = None
     favorite_artist: Optional[str] = None
+    spotify_user_token: Optional[str] = None
+    mongo_id: Optional[str] = None
     class Config:
         orm_mode = True
     

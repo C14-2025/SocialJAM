@@ -4,7 +4,8 @@
         "required": [
             "author_id",
             "content",
-            "created_at"
+            "created_at",
+            "artist_id"
         ],
         "properties": {
             "author_id": {
@@ -14,6 +15,10 @@
             "content": {
                 "bsonType": "string",
                 "description": "Text content from the post"
+            },
+            "artist_id": {
+                "bsonType": "string",
+                "description": "ID of the artist associated with the post"
             },
             "images": {
                 "bsonType": "array",

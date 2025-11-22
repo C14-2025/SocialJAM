@@ -23,6 +23,10 @@ load_dotenv()
 # connect to mongo db right after starting the server and disconnect before closing the server
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Criar diretórios necessários
+    os.makedirs("images/posts", exist_ok=True)
+    os.makedirs("images/pfp", exist_ok=True)
+    
     # Tentar conectar ao MongoDB
     mongo_success = await connect_mongo()
     
@@ -83,8 +87,9 @@ app.add_middleware(
 
 models.base.metadata.create_all(engine)
 
-# essa linha serve pra dar pra buscar imagem no backend
-app.mount("/backend/images", StaticFiles(directory="images"), name="static")
+# Servir arquivos estáticos (imagens)
+app.mount("/images", StaticFiles(directory="images"), name="images")
+app.mount("/backend/images", StaticFiles(directory="images"), name="backend_images")
 
 app.include_router(user_router)
 app.include_router(artist_router)

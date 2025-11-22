@@ -2,13 +2,20 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app import schemas, database, models_sql, JWT_token
 from sqlalchemy.orm import Session
 from ..core.security import Hash
-from datetime import timedelta
+from ..core.mongo import get_mongo_db_with_check
+from ..repositories.users_cache_repository import UserCacheRepo
+from ..models.mongo_users import UserCache
+from datetime import timedelta, datetime
 from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 @router.post("/login")
-async def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
+async def login(
+    request: OAuth2PasswordRequestForm = Depends(), 
+    db: Session = Depends(database.get_db),
+    mongo = Depends(get_mongo_db_with_check)
+):
     if "@" in request.username:
         # Login por email
         user = db.query(models_sql.User).filter(models_sql.User.email == request.username).first()
@@ -20,6 +27,18 @@ async def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = De
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario não encontrado ou incorreto")
     if not Hash.verify(request.password, user.senha):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario não encontrado ou incorreto")
+
+    # Atualizar cache do usuário no MongoDB
+    cache_repo = UserCacheRepo(mongo)
+    await cache_repo.upsert_user_cache(
+        user=UserCache(
+            id="",  # Será mantido o existente ou gerado novo
+            sql_user_id=user.id,
+            name=user.nome,
+            user_photo_url=user.user_photo_url,
+            updated_at=datetime.now()
+        )
+    )
 
     access_token_expires = timedelta(minutes=JWT_token.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = JWT_token.create_access_token(

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, requests, status, Query
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from .. import database, oauth2
@@ -10,6 +10,7 @@ from ..repositories.spotify_albums_repository import get_all_albums_from_artists
 from datetime import datetime
 import json
 import base64
+import requests
 
 router = APIRouter(prefix="/spotify", tags=["spotify"])
 
@@ -225,4 +226,45 @@ async def search_spotify_artists(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao buscar artistas no Spotify: {str(e)}"
+        )
+
+@router.get("/artist/{artist_id}")
+async def get_artist_by_id(
+    artist_id: str,
+    current_user=Depends(oauth2.get_current_user)
+):
+    """Busca informações de um artista específico pelo ID do Spotify"""
+    try:
+        auth_service = SpotifyAuthService()
+        token = auth_service.get_app_access_token()
+        
+        headers = {"Authorization": f"Bearer {token}"}
+        response = requests.get(
+            f"https://api.spotify.com/v1/artists/{artist_id}",
+            headers=headers
+        )
+        
+        if response.status_code == 404:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Artista não encontrado no Spotify"
+            )
+        
+        response.raise_for_status()
+        artist = response.json()
+        
+        return {
+            "id": artist.get("id"),
+            "name": artist.get("name"),
+            "followers": artist.get("followers", {}).get("total", 0),
+            "genres": artist.get("genres", []),
+            "popularity": artist.get("popularity", 0),
+            "photo": artist.get("images", [{}])[0].get("url") if artist.get("images") else None
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao buscar artista no Spotify: {str(e)}"
         )
