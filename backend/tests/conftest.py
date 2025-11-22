@@ -12,6 +12,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.database import base, get_db
+from app.core.mongo import get_mongo_db_with_check
 from main import app
 
 # Configurar variável de ambiente para testes
@@ -70,7 +71,56 @@ def client(db_session):
         finally:
             db_session.close()
     
+    # Mock MongoDB for tests with proper async interface
+    def override_get_mongo():
+        class MockMongoCollection:
+            def __init__(self):
+                self.data = []
+            
+            async def update_one(self, filter_dict, update_dict, upsert=False):
+                # Mock implementation for update_one
+                class MockResult:
+                    def __init__(self):
+                        self.upserted_id = "mock_id"
+                        self.modified_count = 1
+                        self.matched_count = 1
+                return MockResult()
+            
+            async def find_one(self, filter_dict):
+                # Mock implementation for find_one - return None (not found)
+                return None
+            
+            async def insert_one(self, document):
+                # Mock implementation for insert_one
+                class MockResult:
+                    def __init__(self):
+                        self.inserted_id = "mock_id"
+                return MockResult()
+            
+            async def find(self, filter_dict=None):
+                # Mock implementation for find
+                return []
+            
+            async def delete_one(self, filter_dict):
+                # Mock implementation for delete_one
+                class MockResult:
+                    def __init__(self):
+                        self.deleted_count = 1
+                return MockResult()
+        
+        class MockMongoDB:
+            def __init__(self):
+                self.collections = {}
+                
+            def __getitem__(self, key):
+                if key not in self.collections:
+                    self.collections[key] = MockMongoCollection()
+                return self.collections[key]
+        
+        return MockMongoDB()
+    
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_mongo_db_with_check] = override_get_mongo
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
