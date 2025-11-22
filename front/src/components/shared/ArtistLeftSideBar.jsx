@@ -2,6 +2,7 @@ import { useParams, NavLink, useLocation, Link } from "react-router-dom";
 import { artistFeedTabs } from "@/constants";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
+import NotificationBell from "./NotificationBell";
 
 const ArtistLeftSideBar = () => {
   const { pathname } = useLocation();
@@ -82,14 +83,18 @@ const ArtistLeftSideBar = () => {
         </ul>
       </div>
 
-      <Button
-        variant="ghost"
-        className="shad-button_ghost"
-        onClick={handleLogout}
-      >
-        <img src="/assets/icons/logout.svg" alt="Logout" />
-        Sair
-      </Button>
+      <div className="flex flex-col gap-3">
+        <NotificationBell />
+        
+        <Button
+          variant="ghost"
+          className="shad-button_ghost"
+          onClick={handleLogout}
+        >
+          <img src="/assets/icons/logout.svg" alt="Logout" />
+          Sair
+        </Button>
+      </div>
     </nav>
   );
 };

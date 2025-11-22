@@ -475,4 +475,38 @@ export const toggleLikePost = async (postId) => {
   }
 };
 
+export const getNotifications = async () => {
+    try {
+        const response = await api.get('/friends/notifications');
+        return {
+            success: true,
+            data: response.data
+        };
+    } catch (error) {
+        console.error('Erro ao buscar notificações:', error);
+        return {
+            success: false,
+            error: error.response?.data?.detail || 'Erro ao buscar notificações'
+        };
+    }
+};
+
+export const markNotificationAsRead = async (notificationId) => {
+    try {
+        const response = await api.put(`/friends/notifications/${notificationId}/read`);
+        return {
+            success: true,
+            data: response.data
+        };
+    } catch (error) {
+        console.error('Erro ao marcar notificação como lida:', error);
+        return {
+            success: false,
+            error: error.response?.data?.detail || 'Erro ao marcar notificação como lida'
+        };
+    }
+};
+
+
+
 export default api;
