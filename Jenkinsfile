@@ -26,16 +26,16 @@ pipeline {
             steps{
                 dir('backend') {
                 echo 'Build Backend'
-                sh 'python3 --version'
-                sh 'pip3 --version'
-                echo 'Criando UV Venv'
                 sh """
+                    python3 --version
+                    pip3 --version
+                    echo 'Criando UV Venv'
                     python3 -m venv venv
                     . venv/bin/activate
                     pip3 install uv
                     uv sync
+                    echo 'Uv Instalado'
                 """
-                echo "Uv Instalado"
                 }
             }
         }
