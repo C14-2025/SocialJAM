@@ -22,7 +22,25 @@ pipeline {
                     }
             }
         }
+        stage("Build Backend"){
+            steps{
+                dir('backend') {
+                echo 'Build Backend'
+                sh 'python3 --version'
+                sh 'pip3 --version'
+                echo 'Criando UV Venv'
+                sh """
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip3 install uv
+                    uv sync
+                """
+                echo "Abrindo Venv dependencias"
+                sh ". .venv/bin/activate"
+                echo "Ativado"
+                }
+            }
+        }
     
     }
-    
 }
