@@ -2,6 +2,7 @@ import { sidebarLinks } from "@/constants";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { Button } from "../ui/button";
 import { useAuth } from "@/context/AuthContext";
+import NotificationBell from "./NotificationBell";
 
 
 const Leftsidebar = () => {
@@ -80,14 +81,18 @@ const Leftsidebar = () => {
         </ul>
       </div>
 
-      <Button
-        variant="ghost"
-        className="shad-button_ghost"
-        onClick={handleLogout}
-      >
-        <img src="/assets/icons/logout.svg" alt="Logout" />
-        Sair
-      </Button>
+      <div className="flex flex-col gap-3">
+        <NotificationBell />
+        
+        <Button
+          variant="ghost"
+          className="shad-button_ghost"
+          onClick={handleLogout}
+        >
+          <img src="/assets/icons/logout.svg" alt="Logout" />
+          Sair
+        </Button>
+      </div>
     </nav>
   );
 };
