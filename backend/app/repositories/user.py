@@ -16,6 +16,10 @@ def get_user(username: str, db: Session = Depends(get_db)):
     user = db.query(models_sql.User).filter(models_sql.User.username == username).first()
     return user
 
+def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(models_sql.User).filter(models_sql.User.id == user_id).first()
+    return user
+
 async def create_user(request_user: schemas.User, db: Session = Depends(get_db), mongo = Depends(get_mongo_db_with_check)):
     # mongoDB cache instance
     cache = UserCacheRepo(mongo)

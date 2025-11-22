@@ -97,6 +97,13 @@ def set_favorite_artist(
     
     return updated_user
 
+@router.get('/id/{user_id}', status_code=200, response_model=schemas.ShowUser)
+def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
+    user_data = user.get_user_by_id(user_id, db)
+    if not user_data:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    return user_data
+
 @router.get('/{username}', status_code=200, response_model=schemas.ShowUser)
 def show_user(username,response:Response, db:Session=Depends(get_db)):
     return user.show_user(username, db)
