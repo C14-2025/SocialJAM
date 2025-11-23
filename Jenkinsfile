@@ -48,6 +48,17 @@ pipeline {
                 }
             }
         }
+        stage("Test Backend") {
+            steps { 
+                dir("backend/tests") {
+                    echo "Testing Backend"
+                    sh """
+                        . venv/bin/activate
+                        uv run pytest tests/. 
+                    """
+                }
+            }
+        }
     
     }
 }
