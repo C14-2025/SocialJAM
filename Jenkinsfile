@@ -31,6 +31,15 @@ pipeline {
                     }
             }
         }
+        stage('Build Frontend'){
+            steps{
+                dir('front') {
+                    sh '''
+                    npm run build
+                    '''
+                    }
+            }
+        }
         stage("Build Backend"){
             steps{
                 dir('backend') {
