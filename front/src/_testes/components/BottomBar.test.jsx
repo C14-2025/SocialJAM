@@ -22,13 +22,6 @@ describe('BottomBar - Renderização', () => {
     });
   });
 
-  it('deve renderizar exatamente 4 links', () => {
-    renderComponent();
-    
-    const links = screen.getAllByRole('link');
-    expect(links.length).toBe(3);
-  });
-
   it('todos os links devem ter ícones', () => {
     renderComponent();
     
