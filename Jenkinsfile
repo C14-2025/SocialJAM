@@ -22,7 +22,7 @@ pipeline {
                     }
             }
         }
-        stage('Instalando as dependencias do front'){
+        stage('Testando'){
             steps{
                 dir('front') {
                     sh '''
