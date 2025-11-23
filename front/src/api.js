@@ -186,6 +186,25 @@ export const uploadProfilePicture = async (file) => {
   }
 };
 
+export const updateFavoriteArtist = async (artistName) => {
+  try {
+    const response = await api.put("/user/me/favorite-artist", {
+      artist_name: artistName,
+    });
+
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    console.error("Erro ao atualizar artista favorito:", error);
+    return {
+      success: false,
+      error: error.response?.data?.detail || "Erro ao atualizar artista favorito",
+    };
+  }
+};
+
 export const sendFriendRequest = async (receiverId) => {
   try {
     const response = await api.post(`/friends/request/${receiverId}`);

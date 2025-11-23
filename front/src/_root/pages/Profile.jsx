@@ -1,7 +1,6 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import CardUser from '@/components/shared/CardUser';
 import {
   Drawer,
@@ -13,21 +12,70 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { uploadProfilePicture, spotifyLogin, hasSpotifyConnected } from '@/api';
+import { uploadProfilePicture, spotifyLogin, hasSpotifyConnected, searchSpotifyArtists, updateFavoriteArtist } from '@/api';
 
 const Profile = () => {
     const { user, isLoading, refreshUser } = useAuth();
-    const navigate = useNavigate();
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
     const [isConnectingSpotify, setIsConnectingSpotify] = useState(false);
+    const [searchArtistValue, setSearchArtistValue] = useState("");
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [selectedArtist, setSelectedArtist] = useState(null);
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
             setSelectedFile(file);
         }
+    };
+
+    // Busca artistas ao digitar
+    useEffect(() => {
+        const trimmedValue = searchArtistValue.trim();
+
+        if (!trimmedValue) {
+            setSearchResults([]);
+            setIsSearching(false);
+            return;
+        }
+
+        let isActive = true;
+        setIsSearching(true);
+
+        const handler = setTimeout(async () => {
+            try {
+                const result = await searchSpotifyArtists(trimmedValue);
+                if (!isActive) return;
+
+                if (result.success && Array.isArray(result.artists)) {
+                    setSearchResults(result.artists);
+                } else {
+                    setSearchResults([]);
+                }
+            } catch (error) {
+                if (!isActive) return;
+                setSearchResults([]);
+                console.error("Erro ao buscar artistas:", error);
+            } finally {
+                if (isActive) {
+                    setIsSearching(false);
+                }
+            }
+        }, 400);
+
+        return () => {
+            isActive = false;
+            clearTimeout(handler);
+        };
+    }, [searchArtistValue]);
+
+    const handleArtistSelect = (artist) => {
+        setSelectedArtist(artist);
+        setSearchArtistValue(artist.name);
+        setSearchResults([]);
     };
 
     const handleSpotifyConnect = async () => {
@@ -47,25 +95,41 @@ const Profile = () => {
         }
     };
 
-    const handleSaveChanges = async () => { //faz o upload da foto e da um refresh
+    const handleSaveChanges = async () => {
+        setIsUploading(true);
+        let uploadSuccess = true;
+        let artistSuccess = true;
+
+        // Upload da foto se houver
         if (selectedFile) {
-            setIsUploading(true);
-            const result = await uploadProfilePicture(selectedFile); 
-            
-            if (result.success) {
-                // esse refresh basicamente chama o loaduserdata
-                if (refreshUser) {
-                    await refreshUser();
-                }
-                setIsDrawerOpen(false);
-                setSelectedFile(null);
-            } else {
+            const result = await uploadProfilePicture(selectedFile);
+            if (!result.success) {
                 alert('Erro ao fazer upload da foto: ' + result.error);
+                uploadSuccess = false;
             }
-            setIsUploading(false);
-        } else {
-            setIsDrawerOpen(false);
         }
+
+        // Atualizar artista favorito se houver
+        if (selectedArtist) {
+            const result = await updateFavoriteArtist(selectedArtist.name);
+            if (!result.success) {
+                alert('Erro ao atualizar artista favorito: ' + result.error);
+                artistSuccess = false;
+            }
+        }
+
+        // Se tudo deu certo, atualiza o usuário e fecha o drawer
+        if (uploadSuccess && artistSuccess) {
+            if (refreshUser) {
+                await refreshUser();
+            }
+            setIsDrawerOpen(false);
+            setSelectedFile(null);
+            setSelectedArtist(null);
+            setSearchArtistValue("");
+        }
+        
+        setIsUploading(false);
     };
 
     if (isLoading) {
@@ -105,7 +169,7 @@ const Profile = () => {
                         <h3 className="h3-bold mb-2">Conexão Spotify</h3>
                         <p className="text-light-3 text-sm mb-4">
                             {isSpotifyConnected 
-                                ? 'Conectado ao Spotify' 
+                                ? '✅ Conectado ao Spotify' 
                                 : 'Conecte sua conta Spotify para importar seus artistas favoritos'}
                         </p>
                         <Button 
@@ -114,7 +178,7 @@ const Profile = () => {
                             className="bg-green-600 hover:bg-green-700 w-full"
                         >
                             {isConnectingSpotify ? 'Conectando...' : 
-                             isSpotifyConnected ? 'Reconectar ao Spotify' : 'Conectar ao Spotify'}
+                             isSpotifyConnected ? '🔄 Reconectar ao Spotify' : '🎵 Conectar ao Spotify'}
                         </Button>
                     </div>
                 </div>
@@ -131,16 +195,6 @@ const Profile = () => {
                     
                     <div className="px-4 pb-2 space-y-3 ">
                         <div className="space-y-1">
-                            <label className="text-sm font-medium text-light-1">Nome de usuário</label>
-                            <input 
-                                type="text" 
-                                defaultValue={user?.username}
-                                disabled
-                                className="w-full p-2 rounded-lg bg-dark-4 border border-dark-4 text-light-1 text-sm opacity-60 cursor-not-allowed"
-                            />
-                        </div>
-                        
-                        <div className="space-y-1">
                             <label className="text-sm font-medium text-light-1">Foto de perfil</label>
                             <input 
                                 type="file" 
@@ -152,6 +206,59 @@ const Profile = () => {
                                 <p className="text-xs text-light-3 mt-1">
                                     Arquivo selecionado: {selectedFile.name}
                                 </p>
+                            )}
+                        </div>
+                        
+                        <div className="space-y-1 relative">
+                            <label className="text-sm font-medium text-light-1">Artista Favorito</label>
+                            <input 
+                                type="text" 
+                                value={searchArtistValue}
+                                onChange={(e) => setSearchArtistValue(e.target.value)}
+                                placeholder="Buscar artista..."
+                                className="w-full p-2 rounded-lg bg-dark-4 border border-dark-4 text-light-1 text-sm focus:border-primary-500 outline-none"
+                            />
+                            {isSearching && (
+                                <p className="text-xs text-light-3 mt-1">Buscando...</p>
+                            )}
+                            
+                            {/* Resultados da busca */}
+                            {searchResults.length > 0 && (
+                                <div className="absolute z-10 w-full mt-1 bg-dark-3 rounded-lg border border-dark-4 max-h-48 overflow-y-auto">
+                                    {searchResults.map((artist) => (
+                                        <div
+                                            key={artist.id}
+                                            className="p-2 hover:bg-dark-4 cursor-pointer text-light-1 text-sm border-b border-dark-4 last:border-b-0"
+                                            onClick={() => handleArtistSelect(artist)}
+                                        >
+                                            {artist.name}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            
+                            {/* Artista selecionado */}
+                            {selectedArtist && (
+                                <div className="mt-2 p-2 bg-dark-4 rounded-lg flex items-center gap-3">
+                                    <img 
+                                        src={selectedArtist.photo || "/assets/icons/profile-placeholder.svg"} 
+                                        alt={selectedArtist.name}
+                                        className="w-12 h-12 rounded-lg object-cover"
+                                    />
+                                    <div className="flex-1">
+                                        <p className="text-light-1 text-sm font-medium">{selectedArtist.name}</p>
+                                        <p className="text-light-3 text-xs">{selectedArtist.followers} seguidores</p>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            setSelectedArtist(null);
+                                            setSearchArtistValue("");
+                                        }}
+                                        className="text-light-3 hover:text-light-1"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
                             )}
                         </div>
                     </div>

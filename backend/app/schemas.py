@@ -49,7 +49,8 @@ class TokenData(BaseModel):
     email: Optional[str] = None
 
 class FavoriteArtist(BaseModel):
-    artist_id: str
+    artist_id: str = None
+    artist_name: str = None
 
 
 class FriendRequestBase(BaseModel):

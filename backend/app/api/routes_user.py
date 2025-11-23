@@ -77,21 +77,32 @@ def set_favorite_artist(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    """Define o artista favorito do usuário usando o ID do Spotify"""
+    """Define o artista favorito do usuário usando o nome ou ID do Spotify"""
     
-    # Busca informações do artista no Spotify
-    artist_info = spotify_service.get_artist_info(artist_data.artist_id)
+    artist_name = None
     
-    if not artist_info:
+    # Se o nome foi fornecido diretamente, usa ele
+    if artist_data.artist_name:
+        artist_name = artist_data.artist_name
+    # Caso contrário, tenta buscar pelo ID do Spotify
+    elif artist_data.artist_id:
+        try:
+            artist_info = spotify_service.get_artist_info(artist_data.artist_id)
+            if artist_info:
+                artist_name = artist_info["name"]
+        except:
+            pass
+    
+    if not artist_name:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Artista não encontrado no Spotify"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Nome ou ID do artista é obrigatório"
         )
     
     # Atualiza o artista favorito do usuário
     updated_user = user.update_favorite_artist(
         username=current_user.username,
-        artist_name=artist_info["name"],
+        artist_name=artist_name,
         db=db
     )
     
