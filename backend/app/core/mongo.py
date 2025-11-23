@@ -15,8 +15,20 @@ mongo_connected = False
 
 async def connect_mongo():
     global client, db, mongo_connected
+    
+    # Se estiver em modo de testes, não tenta conectar
+    if os.getenv("TESTING", "false").lower() == "true":
+        print("Modo de testes: MongoDB desabilitado")
+        mongo_connected = False
+        return False
+    
     try:
-        client = AsyncIOMotorClient(settings.MONGO_URI)
+        # Timeout curto para ambientes de teste
+        timeout_ms = 1000 if os.getenv("TESTING") else 20000
+        client = AsyncIOMotorClient(
+            settings.MONGO_URI,
+            serverSelectionTimeoutMS=timeout_ms
+        )
         db = client[settings.MONGO_DB_NAME]
         # Test the connection
         await db.command('ping')

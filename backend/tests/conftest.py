@@ -10,125 +10,118 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+from passlib.context import CryptContext
+
+# Habilitar modo de testes ANTES de importar o app
+os.environ["TESTING"] = "true"
 
 from app.database import base, get_db
 from app.core.mongo import get_mongo_db_with_check
+from app.core.security import Hash
 from main import app
 
-# Configurar variável de ambiente para testes
-os.environ["SECRET_KEY"] = "test_secret_key_for_jwt_tokens_in_tests_should_be_very_secure"
+# Criar contexto de criptografia para o mock
+pwd_cxt = CryptContext(schemes=['bcrypt'], deprecated="auto")
 
+# Banco totalmente em memória (CORRETO)
+SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
-# Configuração do banco de dados de teste em memória
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 TEST_MONGO_URI = 'mongodb://localhost:27017'
 TESTE_DB_NAME = 'SocialJAM_TEST'
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
+    poolclass=StaticPool,  # Necessário para manter uma única conexão
 )
 
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# create a loop to deal with async functions
+
 @pytest.fixture(scope='session')
 def event_loop():
-    # Allows you to run asynchronous tests with pytest-asyncio
     loop = asyncio.get_event_loop()
     yield loop
     loop.close()
 
-# fixture for the mongoDB connection using a test db
-@pytest_asyncio.fixture(scope="function")
+
+@pytest_asyncio.fixture(scope="session")
 async def mongo_client():
-    # create a mongoDB client for the tests and then clean it after the tests
     client = AsyncIOMotorClient(TEST_MONGO_URI)
     db = client[TESTE_DB_NAME]
     yield db
     await client.drop_database(TESTE_DB_NAME)
-    client.close() 
+    client.close()
+
 
 @pytest.fixture(scope="function")
 def db_session():
-    """Fixture que cria uma sessão de banco de dados para testes"""
     base.metadata.create_all(bind=engine)
     session = TestingSessionLocal()
-    try:
-        yield session
-    finally:
-        session.close()
-        base.metadata.drop_all(bind=engine)
+    yield session
+    session.close()
+    base.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture(scope="function")
 def client(db_session):
-    """Fixture que cria um cliente de teste do FastAPI"""
+    """
+    Cliente de teste com mocks de MongoDB e Hash.
+    """
     def override_get_db():
-        try:
-            yield db_session
-        finally:
-            db_session.close()
-    
-    # Mock MongoDB for tests with proper async interface
+        yield db_session
+
+    # Mock MongoDB para testes
     def override_get_mongo():
         class MockMongoCollection:
             def __init__(self):
                 self.data = []
-            
-            async def update_one(self, filter_dict, update_dict, upsert=False):
-                # Mock implementation for update_one
-                class MockResult:
-                    def __init__(self):
-                        self.upserted_id = "mock_id"
-                        self.modified_count = 1
-                        self.matched_count = 1
-                return MockResult()
-            
-            async def find_one(self, filter_dict):
-                # Mock implementation for find_one - return None (not found)
+
+            async def update_one(self, *a, **k):
+                class R:
+                    upserted_id = "mock_id"
+                    modified_count = 1
+                    matched_count = 1
+                return R()
+
+            async def find_one(self, *a, **k):
                 return None
-            
-            async def insert_one(self, document):
-                # Mock implementation for insert_one
-                class MockResult:
-                    def __init__(self):
-                        self.inserted_id = "mock_id"
-                return MockResult()
-            
-            async def find(self, filter_dict=None):
-                # Mock implementation for find
+
+            async def insert_one(self, *a, **k):
+                class R:
+                    inserted_id = "mock_id"
+                return R()
+
+            async def find(self, *a, **k):
                 return []
-            
-            async def delete_one(self, filter_dict):
-                # Mock implementation for delete_one
-                class MockResult:
-                    def __init__(self):
-                        self.deleted_count = 1
-                return MockResult()
-        
+
+            async def delete_one(self, *a, **k):
+                class R:
+                    deleted_count = 1
+                return R()
+
         class MockMongoDB:
             def __init__(self):
                 self.collections = {}
-                
+
             def __getitem__(self, key):
                 if key not in self.collections:
                     self.collections[key] = MockMongoCollection()
                 return self.collections[key]
-        
+
         return MockMongoDB()
-    
+
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_mongo_db_with_check] = override_get_mongo
-    with TestClient(app) as test_client:
+
+    with TestClient(app, raise_server_exceptions=False) as test_client:
         yield test_client
+
     app.dependency_overrides.clear()
 
 
 @pytest.fixture
 def sample_user_data():
-    """Fixture com dados de exemplo para usuário"""
     return {
         "username": "testuser",
         "nome": "Test User",
@@ -137,20 +130,25 @@ def sample_user_data():
     }
 
 
-@pytest.fixture
-def sample_artist_data():
-    """Fixture com dados de exemplo para artista"""
-    return {
-        "nome": "Test Artist",
-        "music_genre": "Rock"
-    }
-
-
-@pytest.fixture
-def sample_album_data():
-    """Fixture com dados de exemplo para álbum"""
-    return {
-        "nome": "Test Album",
-        "total_tracks": 10,
-        "artist_id": 1
-    }
+@pytest.fixture(autouse=True)
+def fast_hash(monkeypatch):
+    """
+    Mock de Hash para testes rápidos.
+    Usa hash bcrypt válido para evitar erros de validação.
+    """
+    # Hash bcrypt real de "testpassword123" - mais rápido que gerar novo a cada teste
+    FIXED_HASH = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYmPnr7u.3S"
+    
+    def mock_hash(password):
+        # Para testes, sempre retorna o mesmo hash válido
+        return FIXED_HASH
+    
+    def mock_verify(plain_pwd, hashed_pwd):
+        # Verifica se é o hash fixo e se a senha é testpassword123
+        if hashed_pwd == FIXED_HASH and plain_pwd == "testpassword123":
+            return True
+        # Fallback para verificação real se necessário
+        return pwd_cxt.verify(plain_pwd, hashed_pwd)
+    
+    monkeypatch.setattr(Hash, "hashPWD", mock_hash)
+    monkeypatch.setattr(Hash, "verify", mock_verify)

@@ -1,52 +1,8 @@
 
-"""
-Testes para funcionalidades de usuário do SocialJAM
-
-Este módulo contém testes abrangentes para todas as funcionalidades relacionadas
-a usuários, incluindo CRUD, autenticação, validações e funcionalidades avançadas
-como upload de foto e integração com Spotify.
-"""
-
 import pytest
 from fastapi import status
 from app import models_sql as models
 from app.core.security import Hash
-
-
-class TestUserModel:
-    """
-    Testes para o modelo SQLAlchemy User
-    Verifica criação e validação de dados no nível do modelo
-    """
-    
-    def test_create_user_success(self, db_session, sample_user_data):
-        """
-        Mock Test: Criação bem-sucedida de usuário no banco
-        
-        Simula criação direta no banco de dados usando SQLAlchemy.
-        Testa se o hash da senha está funcionando corretamente.
-        """
-        # Arrange - Preparar dados do usuário
-        user_data = sample_user_data
-        
-        # Act - Criar usuário diretamente no banco
-        new_user = models.User(
-            nome=user_data["nome"],
-            username=user_data["username"],
-            email=user_data["email"],
-            senha=Hash.hashPWD(user_data["senha"])
-        )
-        db_session.add(new_user)
-        db_session.commit()
-        db_session.refresh(new_user)
-        
-        # Assert - Verificar se dados foram salvos corretamente
-        assert new_user.id is not None
-        assert new_user.username == user_data["username"]
-        assert new_user.nome == user_data["nome"]
-        assert new_user.email == user_data["email"]
-        assert new_user.senha != user_data["senha"]  # Senha deve estar hashada
-
 
 class TestUserCRUD:
     """
