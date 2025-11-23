@@ -250,14 +250,14 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    transition: background-image 1s ease-in-out;
+    transition: background-image 5s ease-in-out;
   }
   /* essa aqui é do all users*/
   .bg-exploreusers {
     background-image: url('/assets/images/amigos3.png');
     background-size: cover;
-    background-position: center;
     background-repeat: no-repeat;
+    padding-top: 20px;
   }
   .bg-user {
     background-image: url('/assets/images/fundoperfil_02.png');

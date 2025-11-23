@@ -110,23 +110,23 @@ const Explore = () => {
           setSearchValue((prev) => (prev ? "" : prev));
           if (showAlerts) {
             alert(
-              `✅ ${result.artists.length} artistas carregados do Spotify!`
+              `${result.artists.length} artistas carregados do Spotify!`
             );
           }
         } else if (result.needsAuth) {
           if (showAlerts) {
             alert(
-              "⚠️ Você precisa conectar sua conta Spotify primeiro! Vá até o Profile."
+              "Você precisa conectar sua conta Spotify primeiro! Vá até o Profile."
             );
           }
         } else {
           if (showAlerts) {
-            alert("❌ Erro ao buscar artistas: " + result.error);
+            alert("Erro ao buscar artistas: " + result.error);
           }
         }
       } catch {
         if (showAlerts) {
-          alert("❌ Erro ao buscar artistas do Spotify");
+          alert("Erro ao buscar artistas do Spotify");
         }
       } finally {
         setLoadingSpotify(false);
@@ -172,13 +172,13 @@ const Explore = () => {
           setArtists(result.artists);
         } else if (result.needsAuth) {
           alert(
-            "⚠️ Você precisa conectar sua conta Spotify primeiro! Vá até o Profile."
+            "Você precisa conectar sua conta Spotify primeiro! Vá até o Profile."
           );
           setArtists(
             topArtists && topArtists.length > 0 ? topArtists : DEFAULT_ARTISTS
           );
         } else {
-          alert("❌ Erro ao buscar artistas: " + result.error);
+          alert("Erro ao buscar artistas: " + result.error);
           setArtists(
             topArtists && topArtists.length > 0 ? topArtists : DEFAULT_ARTISTS
           );
@@ -187,7 +187,7 @@ const Explore = () => {
         if (!isActive) {
           return;
         }
-        alert("❌ Erro inesperado ao buscar artistas no Spotify");
+        alert("Erro inesperado ao buscar artistas no Spotify");
         setArtists(
           topArtists && topArtists.length > 0 ? topArtists : DEFAULT_ARTISTS
         );
@@ -230,9 +230,9 @@ const Explore = () => {
           <Button
             onClick={() => handleFetchSpotifyTopArtists()}
             disabled={loadingSpotify || searchLoading}
-            className="bg-green-600 hover:bg-green-700"
+            className="bg-green-600 hover:bg-green-700 rounded-xl"
           >
-            {loadingSpotify ? "⏳ Carregando..." : "🎵 Buscar Meus Top Artists"}
+            {loadingSpotify ? "Carregando..." : "Buscar Meus Top Artists"}
           </Button>
         </div>
         <InputGroup className="w-full max-w-5xl bg-dark-4 rounded-xl border-2 border-transparent focus-within:border-white transition-colors">

@@ -22,6 +22,15 @@ pipeline {
                     }
             }
         }
+        stage('Instalando as dependencias do front'){
+            steps{
+                dir('front') {
+                    sh '''
+                    npm run test:run -- src/_testes/forms
+                    '''
+                    }
+            }
+        }
         stage("Build Backend"){
             steps{
                 dir('backend') {
