@@ -50,7 +50,7 @@ pipeline {
         }
         stage("Test Backend") {
             steps { 
-                dir("backend/tests") {
+                dir("backend") {
                     echo "Testing Backend"
                     sh """
                         . venv/bin/activate
