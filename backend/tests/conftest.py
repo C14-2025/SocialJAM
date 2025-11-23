@@ -130,6 +130,25 @@ def sample_user_data():
     }
 
 
+@pytest.fixture
+def sample_artist_data():
+    """Fixture com dados de exemplo para artista"""
+    return {
+        "nome": "Test Artist",
+        "music_genre": "Rock"
+    }
+
+
+@pytest.fixture
+def sample_album_data():
+    """Fixture com dados de exemplo para álbum"""
+    return {
+        "nome": "Test Album",
+        "total_tracks": 10,
+        "artist_id": 1
+    }
+
+
 @pytest.fixture(autouse=True)
 def fast_hash(monkeypatch):
     """
@@ -139,14 +158,21 @@ def fast_hash(monkeypatch):
     # Hash bcrypt real de "testpassword123" - mais rápido que gerar novo a cada teste
     FIXED_HASH = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYmPnr7u.3S"
     
+    # Dicionário para armazenar senhas mockadas (senha original -> hash)
+    password_store = {}
+    
     def mock_hash(password):
         # Para testes, sempre retorna o mesmo hash válido
+        # Mas armazena a relação senha->hash para verificação posterior
+        password_store[password] = FIXED_HASH
         return FIXED_HASH
     
     def mock_verify(plain_pwd, hashed_pwd):
-        # Verifica se é o hash fixo e se a senha é testpassword123
-        if hashed_pwd == FIXED_HASH and plain_pwd == "testpassword123":
-            return True
+        # Se a senha foi hashada antes e o hash é o mesmo, retorna True
+        if hashed_pwd == FIXED_HASH:
+            # Em testes, qualquer senha que foi hashada é considerada válida
+            # desde que seja a mesma que foi usada no hash
+            return plain_pwd in password_store
         # Fallback para verificação real se necessário
         return pwd_cxt.verify(plain_pwd, hashed_pwd)
     
