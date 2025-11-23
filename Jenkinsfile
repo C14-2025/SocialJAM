@@ -74,8 +74,9 @@ pipeline {
                 echo 'Enviando notificação de conclusão...'
                 
                 sh '''
-                    cd Scripts
-                    python3 send_email.py
+                   cd scripts
+                   chmod 775 *
+                   ./shell.sh
                 '''
             }
         }
