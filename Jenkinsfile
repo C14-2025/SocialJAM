@@ -26,7 +26,7 @@ pipeline {
             steps{
                 dir('front') {
                     sh '''
-                    npm run test:run -- src/_testes/forms
+                    npm test
                     '''
                     }
             }
