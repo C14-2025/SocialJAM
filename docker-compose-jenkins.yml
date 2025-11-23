@@ -2,6 +2,10 @@
 version: '3.8'
 services:
   jenkins_python:
+    environment:
+        EMAIL_TO: ${EMAIL_TO}
+        SMTP_USER: ${SMTP_USER}
+        SMTP_PASSWORD: ${SMTP_PASSWORD}
     build:
       context: ./docker
       dockerfile: Dockerfile
