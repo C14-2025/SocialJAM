@@ -68,6 +68,17 @@ pipeline {
                 }
             }
         }
+        
+        stage('Send Notification') {
+            steps {
+                echo 'Enviando notificação de conclusão...'
+                
+                sh '''
+                    cd scripts
+                    python3 send_email.py
+                '''
+            }
+        }
     
     }
 }
