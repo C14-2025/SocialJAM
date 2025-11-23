@@ -105,7 +105,7 @@ const Profile = () => {
                         <h3 className="h3-bold mb-2">Conexão Spotify</h3>
                         <p className="text-light-3 text-sm mb-4">
                             {isSpotifyConnected 
-                                ? '✅ Conectado ao Spotify' 
+                                ? 'Conectado ao Spotify' 
                                 : 'Conecte sua conta Spotify para importar seus artistas favoritos'}
                         </p>
                         <Button 
@@ -114,7 +114,7 @@ const Profile = () => {
                             className="bg-green-600 hover:bg-green-700 w-full"
                         >
                             {isConnectingSpotify ? 'Conectando...' : 
-                             isSpotifyConnected ? '🔄 Reconectar ao Spotify' : '🎵 Conectar ao Spotify'}
+                             isSpotifyConnected ? 'Reconectar ao Spotify' : 'Conectar ao Spotify'}
                         </Button>
                     </div>
                 </div>
