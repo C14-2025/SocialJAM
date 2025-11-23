@@ -74,7 +74,7 @@ pipeline {
                 echo 'Enviando notificação de conclusão...'
                 
                 sh '''
-                    cd scripts
+                    cd Scripts
                     python3 send_email.py
                 '''
             }
