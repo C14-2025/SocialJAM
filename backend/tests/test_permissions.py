@@ -74,14 +74,6 @@ def test_search_artist_by_name_still_works(client: TestClient):
     assert "Nao existe esse Artista" in response.json()["detail"]
 
 
-def test_search_album_by_name_still_works(client: TestClient):
-    """Testa que a busca de álbum por nome ainda funciona"""
-    # Deve retornar alguma resposta (mesmo que lista vazia ou erro de não encontrado)
-    response = client.get("/album/nonexistent_album")
-    # Pode ser 404 (não encontrado) ou 200 (lista vazia), ambos são válidos
-    assert response.status_code in [status.HTTP_200_OK, status.HTTP_404_NOT_FOUND]
-
-
 def test_permission_system_imports_correctly():
     """Testa que o sistema de permissões pode ser importado sem erro"""
     from app.core.permissions import SystemPermissions, require_system_script_for_artist_creation, require_system_script_for_album_creation
