@@ -43,7 +43,7 @@ pipeline {
         stage("Build Backend"){
             steps{
                 dir('backend') {
-                echo 'Build Backend'
+                echo ' Começando Build Backend'
                 sh """
                     python3 --version
                     pip3 --version
@@ -64,6 +64,16 @@ pipeline {
                     sh """
                         . venv/bin/activate
                         uv run pytest tests/. 
+                    """
+                }
+            }
+        }
+        stage("Gerando Docker Image"){
+            steps{
+                dir("backend"){
+                    sh """
+                        docker --version
+                        docker build -t socialjam-backend:latest .
                     """
                 }
             }
