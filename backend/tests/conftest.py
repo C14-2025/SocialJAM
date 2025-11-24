@@ -14,6 +14,7 @@ from passlib.context import CryptContext
 
 # Habilitar modo de testes ANTES de importar o app
 os.environ["TESTING"] = "true"
+os.environ["SECRET_KEY"] = "chave_secreta_para_testes_hehe"
 
 from app.database import base, get_db
 from app.core.mongo import get_mongo_db_with_check
