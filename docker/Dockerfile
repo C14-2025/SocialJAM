@@ -15,6 +15,12 @@ RUN apt-get install -y python3-venv
 #instalando o npm
 RUN apt-get install -y nodejs npm
 
+# Instala Docker CLI
+RUN apt-get install -y docker.io
+
+# Adiciona jenkins ao grupo docker
+RUN usermod -aG docker jenkins
+
 # Da permissão para o usuário jenkins
 RUN chown -R jenkins:jenkins /usr/local
 
