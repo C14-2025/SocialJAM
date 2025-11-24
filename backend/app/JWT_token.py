@@ -4,7 +4,15 @@ from jose import JWTError, jwt
 
 # to get a string like this run:
 # openssl rand -hex 32
-SECRET_KEY = os.getenv("SECRET_KEY", "development_secret_key")
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+# Permitir fallback apenas em modo de testes
+if not SECRET_KEY:
+    if os.getenv("TESTING", "").lower() == "true":
+        SECRET_KEY = "chave_secreta_para_testes_hehe"
+    else:
+        raise ValueError("SECRET_KEY não está definida! Configure a variável de ambiente SECRET_KEY no arquivo .env")
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
