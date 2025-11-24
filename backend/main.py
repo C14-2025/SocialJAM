@@ -1,3 +1,9 @@
+from dotenv import load_dotenv
+import os
+
+# Carregar variáveis de ambiente ANTES de qualquer outro import
+load_dotenv()
+
 import uvicorn
 from app.api.routes_album import router as album_router
 from fastapi import FastAPI
@@ -15,10 +21,6 @@ from app.core.mongo import connect_mongo, disconnect_mongo, apply_schemas, is_mo
 from contextlib import asynccontextmanager
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
 
 # connect to mongo db right after starting the server and disconnect before closing the server
 @asynccontextmanager
