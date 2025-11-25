@@ -26,14 +26,9 @@ pipeline {
             steps{
                 dir('front') {
                     sh '''
-                    npm run test:run
+                    npm test
                     '''
-                }
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'front/test-results/**/*', allowEmptyResults: true, fingerprint: true
-                }
+                    }
             }
         }
         stage('Build Frontend'){
