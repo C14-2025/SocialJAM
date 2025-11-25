@@ -37,12 +37,7 @@ pipeline {
                     sh '''
                     npm run build
                     '''
-                }
-            }
-            post {
-                success {
-                    archiveArtifacts artifacts: 'front/dist/**/*', fingerprint: true
-                }
+                    }
             }
         }
         stage("Build Backend"){
